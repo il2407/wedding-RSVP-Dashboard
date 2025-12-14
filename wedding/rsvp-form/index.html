@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>איה ועידו - אישור הגעה לחתונה</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Heebo', Arial, sans-serif;
+      background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 25%, #fdba74 50%, #fb923c 75%, #f97316 100%);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(251, 146, 60, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(245, 101, 101, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 32px;
+      box-shadow: 
+        0 20px 60px rgba(249, 115, 22, 0.15),
+        0 8px 32px rgba(251, 146, 60, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      padding: 3rem 2.5rem 2.5rem 2.5rem;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      direction: rtl;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #f97316, #ea580c, #dc2626, #f97316);
+      background-size: 400% 100%;
+      animation: shimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes tilt {
+      0%, 100% { transform: rotate(-5deg); }
+      50% { transform: rotate(5deg); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-10px); }
+      60% { transform: translateY(-5px); }
+    }
+    
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    .wedding-header {
+      margin-bottom: 2.5rem;
+      position: relative;
+      animation: slideInUp 0.8s ease-out;
+    }
+    
+    .wedding-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #f97316, #ea580c, #dc2626);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2rem;
+    }
+    
+    .wedding-sticker {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      animation: tilt 1s ease-in-out infinite;
+      filter: drop-shadow(0 4px 8px rgba(249, 115, 22, 0.3));
+    }
+    
+    .wedding-subtitle {
+      font-size: 1.1rem;
+      color: #6b7280;
+      font-weight: 400;
+      margin-bottom: 1rem;
+    }
+    
+    .wedding-date {
+      display: inline-block;
+      background: linear-gradient(135deg, #fed7aa, #fdba74);
+      color: #ea580c;
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1rem;
+      border: 1px solid rgba(234, 88, 12, 0.2);
+      margin-bottom: -2rem;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+      animation: slideInUp 0.8s ease-out 0.2s both;
+    }
+    
+    .wedding-date a {
+      color: #ea580c;
+      text-decoration: none;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(234, 88, 12, 0.3);
+      transition: all 0.3s ease;
+      display: inline-block;
+      margin-top: 0.3rem;
+    }
+    
+    .wedding-date a:hover {
+      color: #dc2626;
+      border-bottom-color: #dc2626;
+      transform: translateY(-1px);
+      text-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+    }
+    
+    .personalized-greeting {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      color: #92400e;
+      font-size: 1.3rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 2rem;
+      padding: 1rem 1.5rem;
+      border-radius: 16px;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      box-shadow: 0 4px 12px rgba(251, 191, 36, 0.15);
+      position: relative;
+      overflow: hidden;
+      animation: slideInUp 0.8s ease-out 0.4s both;
+    }
+    
+    /* Removed animated star emoji before personalized greeting */
+    
+    .invite-message {
+      color: #4b5563;
+      font-size: 1.15rem;
+      font-weight: 400;
+      line-height: 1.7;
+      margin-bottom: 2rem;
+      text-align: center;
+      animation: slideInUp 0.8s ease-out 1.2s both;
+    }
+    
+    .form-container {
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 20px;
+      padding: 2rem;
+      border: 1px solid rgba(249, 115, 22, 0.1);
+      backdrop-filter: blur(10px);
+      animation: slideInUp 0.8s ease-out 1.4s both;
+      transition: all 0.3s ease;
+    }
+    
+    .form-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(249, 115, 22, 0.15);
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.8rem;
+      font-weight: 600;
+      color: #ea580c;
+      font-size: 1.1rem;
+      text-align: right;
+      animation: slideInUp 0.8s ease-out 1.6s both;
+    }
+    
+    input[type="number"] {
+      width: 100%;
+      padding: 1rem 1.2rem;
+      margin-bottom: 2rem;
+      border: 2px solid rgba(249, 115, 22, 0.2);
+      border-radius: 16px;
+      font-size: 1.1rem;
+      background: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+      direction: rtl;
+      font-weight: 500;
+      animation: slideInUp 0.8s ease-out 1.2s both;
+    }
+    
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #f97316;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+      transform: translateY(-2px) scale(1.02);
+    }
+    
+    select {
+      width: 100%;
+      padding: 1rem 1.2rem;
+      margin-bottom: 2rem;
+      border: 2px solid rgba(249, 115, 22, 0.2);
+      border-radius: 16px;
+      font-size: 1.1rem;
+      background: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+      direction: rtl;
+      font-weight: 500;
+      animation: slideInUp 0.8s ease-out 1.8s both;
+      cursor: pointer;
+    }
+    
+    select:focus {
+      outline: none;
+      border-color: #f97316;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+      transform: translateY(-2px) scale(1.02);
+    }
+    
+    select option {
+      padding: 0.5rem;
+      font-size: 1rem;
+      background: #fff;
+      color: #374151;
+    }
+    
+    button {
+      width: 100%;
+      padding: 1.2rem 0;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      font-size: 1.3rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 24px rgba(249, 115, 22, 0.3);
+      position: relative;
+      overflow: hidden;
+      letter-spacing: 0.5px;
+      animation: slideInUp 0.8s ease-out 2.0s both;
+    }
+    
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    button:hover::before {
+      left: 100%;
+    }
+    
+    button:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 32px rgba(249, 115, 22, 0.4);
+    }
+    
+    button:active {
+      transform: translateY(-1px) scale(0.98);
+    }
+    
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .confirmation {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      min-height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      animation: slideInUp 0.8s ease-out 2.2s both;
+    }
+    
+    .confirmation.success {
+      color: #059669;
+      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+      border: 1px solid rgba(5, 150, 105, 0.2);
+      animation: bounce 0.6s ease-out;
+    }
+    
+    .confirmation.error {
+      color: #dc2626;
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      border: 1px solid rgba(220, 38, 38, 0.2);
+      animation: bounce 0.6s ease-out;
+    }
+    
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      /* Show immediately without animation */
+      animation: none;
+    }
+    
+    .modal-backdrop.styled {
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    .modal-content {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      padding: 2.5rem 2rem 2rem 2rem;
+      max-width: 380px;
+      width: 90vw;
+      text-align: center;
+      direction: rtl;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      /* Show immediately without animation */
+      animation: none;
+    }
+    
+    .modal-content.styled {
+      animation: zoomInBounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .modal-content.styled::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #f97316, #ea580c, #dc2626, #f97316);
+      background-size: 400% 100%;
+      animation: shimmer 2s ease-in-out infinite;
+    }
+    
+    
+    @keyframes zoomInBounce {
+      0% {
+        transform: scale(0.3) rotate(-10deg);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.1) rotate(2deg);
+        opacity: 0.8;
+      }
+      70% {
+        transform: scale(0.95) rotate(-1deg);
+        opacity: 0.9;
+      }
+      100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+      }
+    }
+    
+    #modal-message {
+      color: #374151;
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+      font-weight: 500;
+    }
+    
+    .modal-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    
+    .modal-btn {
+      padding: 0.8rem 1.5rem;
+      border-radius: 12px;
+      border: none;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 100px;
+      /* Override global button animation so these show immediately */
+      animation: none !important;
+    }
+    
+    .modal-btn.update {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+    }
+    
+    .modal-btn.cancel {
+      background: rgba(255, 255, 255, 0.9);
+      color: #6b7280;
+      border: 1px solid rgba(107, 114, 128, 0.2);
+    }
+    
+    .modal-btn:hover {
+      transform: translateY(-2px) scale(1.05);
+    }
+    
+    .photo-modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      /* Show immediately without animation */
+      opacity: 1;
+      animation: none;
+    }
+    
+    .photo-modal-content {
+      background: #000;
+      border-radius: 32px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      padding: 12px;
+      width: 300px;
+      height: 540px;
+      text-align: center;
+      direction: rtl;
+      position: relative;
+      border: 3px solid #333;
+      box-shadow: 0 0 30px rgba(0,0,0,0.7);
+      /* Show immediately without animation */
+      transform: none;
+      animation: none;
+    }
+    
+    .photo-modal-content::before {
+      content: '';
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70px;
+      height: 8px;
+      background: #333;
+      border-radius: 4px;
+      z-index: 1;
+    }
+    
+    .photo-modal-content img,
+    .photo-modal-content video {
+      width: 100%;
+      height: 100%;
+      border-radius: 24px;
+      object-fit: cover;
+      display: block;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .photo-close-btn {
+      position: absolute;
+      top: -18px;
+      right: -18px;
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+      z-index: 2;
+      transition: all 0.3s ease;
+      animation: float 2s ease-in-out infinite;
+    }
+    
+    .photo-close-btn:hover {
+      transform: scale(1.1) rotate(90deg);
+      box-shadow: 0 6px 16px rgba(249, 115, 22, 0.5);
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes zoomIn {
+      from {
+        transform: scale(0.3) rotate(-5deg);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 2rem 1.5rem 2rem 1.5rem;
+        max-width: 95vw;
+        margin: 1rem;
+      }
+      
+      .wedding-title {
+        font-size: 2rem;
+      }
+      
+      .photo-modal-content {
+        width: 90vw;
+        height: 70vh;
+        max-width: 340px;
+        max-height: 640px;
+      }
+      
+      .modal-content {
+        padding: 2rem 1.5rem 1.5rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="wedding-header">
+      <h1 class="wedding-title">
+        <img src="sticker.png" alt="sticker" class="wedding-sticker">
+        איה
+        ועידו
+        <img src="stickerido.png" alt="sticker" class="wedding-sticker">
+      </h1>
+      <p class="wedding-subtitle">מתחתנים!</p>
+      <div class="wedding-date">
+        בתאריך: 7.11.2025<br>
+        בשעה: 14:00<br>
+        חוות בלו סקיי , מזכרת בתיה<br>
+        <a href="https://waze.com/ul/hsv8v1h0ge" target="_blank">
+          לחצו להכוונה בוויז
+        </a>
+      </div>
+    </div>
+    
+    <div id="personalized-greeting" class="personalized-greeting" style="display: none;"></div>
+    
+    <p class="invite-message">
+      שמחים להזמין אתכם לחתונה שלנו! 🎊<br>
+    </p>
+    
+    <div class="form-container">
+      <form id="rsvp-form" autocomplete="off">
+        <label for="guests">כמה תהיו? (כולל אותך)</label>
+        <select id="guests" name="guests" required style="width: 100%; padding: 1rem 1.2rem; margin-bottom: 2rem; border: 2px solid rgba(249, 115, 22, 0.2); border-radius: 16px; font-size: 1.1rem; background: rgba(255, 255, 255, 0.9); transition: all 0.3s ease; direction: rtl; font-weight: 500; animation: slideInUp 0.8s ease-out 1.2s both;">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+        </select>
+        <div id="action-buttons" style="display: flex; gap: 1rem; margin-top: 1rem;">
+          <button type="submit" id="submit-btn" style="flex: 1;">
+            <span id="btn-text">סימנתי כמה נהיה ונגיע</span>
+            <span id="btn-spinner" style="display:none; margin-right:8px; vertical-align:middle;">
+              <svg width="20" height="20" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="#fff">
+                <g fill="none" fill-rule="evenodd">
+                  <g transform="translate(1 1)" stroke-width="3">
+                    <circle stroke-opacity=".3" cx="18" cy="18" r="18"/>
+                    <path d="M36 18c0-9.94-8.06-18-18-18">
+                      <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="1s" repeatCount="indefinite"/>
+                    </path>
+                  </g>
+                </g>
+              </svg>
+            </span>
+          </button>
+          <button type="button" id="not-coming-btn" style="flex: 1; background: linear-gradient(135deg, #6b7280, #4b5563);">
+            <span id="not-coming-text">לצערי לא אגיע</span>
+            <span id="not-coming-spinner" style="display:none; margin-right:8px; vertical-align:middle;">
+              <svg width="20" height="20" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="#fff">
+                <g fill="none" fill-rule="evenodd">
+                  <g transform="translate(1 1)" stroke-width="3">
+                    <circle stroke-opacity=".3" cx="18" cy="18" r="18"/>
+                    <path d="M36 18c0-9.94-8.06-18-18-18">
+                      <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="1s" repeatCount="indefinite"/>
+                    </path>
+                  </g>
+                </g>
+              </svg>
+            </span>
+          </button>
+          <button type="button" id="not-sure-btn" style="flex: 1; background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <span id="not-sure-text">עוד לא יודע</span>
+          </button>
+        </div>
+        <div id="global-loader" class="global-loader" style="display:none; align-items:center; justify-content:center; gap:10px; margin-top: 1rem;">
+          <svg width="28" height="28" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="#ea580c">
+            <g fill="none" fill-rule="evenodd">
+              <g transform="translate(1 1)" stroke-width="3">
+                <circle stroke-opacity=".2" cx="18" cy="18" r="18"/>
+                <path d="M36 18c0-9.94-8.06-18-18-18">
+                  <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="0.9s" repeatCount="indefinite"/>
+                </path>
+              </g>
+            </g>
+          </svg>
+          <span style="color:#6b7280; font-weight:600;">שולח...</span>
+        </div>
+      </form>
+    </div>
+    
+    <div class="confirmation" id="confirmation"></div>
+  </div>
+  
+  <div id="custom-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal-content">
+      <div id="modal-message"></div>
+      <div class="modal-actions">
+        <button id="modal-update" class="modal-btn update">עדכן</button>
+        <button id="modal-cancel" class="modal-btn cancel">השאר כמו שהיה</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="photo-modal" class="photo-modal-backdrop" style="display:none;">
+    <div class="photo-modal-content">
+      <button id="photo-close" class="photo-close-btn">×</button>
+      <video id="photo-video" style="display:none;" autoplay loop muted playsinline>
+        <source src="" type="video/mp4">
+        <source src="" type="video/webm">
+        <source src="" type="video/ogg">
+      </video>
+      <img id="photo-image" src="" alt="תמונה" style="display:none;">
+    </div>
+  </div>
+  <script>
+    const INVITED_API = 'https://sheetdb.io/api/v1/a2omrjytm7xx3';
+    const form = document.getElementById('rsvp-form');
+    const confirmation = document.getElementById('confirmation');
+    const submitBtn = document.getElementById('submit-btn');
+    const notComingBtn = document.getElementById('not-coming-btn');
+    const notSureBtn = document.getElementById('not-sure-btn');
+    const btnText = document.getElementById('btn-text');
+    const notComingText = document.getElementById('not-coming-text');
+    const notSureText = document.getElementById('not-sure-text');
+    const btnSpinner = document.getElementById('btn-spinner');
+    const notComingSpinner = document.getElementById('not-coming-spinner');
+    const actionButtons = document.getElementById('action-buttons');
+    const globalLoader = document.getElementById('global-loader');
+    const customModal = document.getElementById('custom-modal');
+    const modalMessage = document.getElementById('modal-message');
+    const modalUpdateBtn = document.getElementById('modal-update');
+    const modalCancelBtn = document.getElementById('modal-cancel');
+    const personalizedGreeting = document.getElementById('personalized-greeting');
+    const photoModal = document.getElementById('photo-modal');
+    const photoImage = document.getElementById('photo-image');
+    const photoVideo = document.getElementById('photo-video');
+    const photoCloseBtn = document.getElementById('photo-close');
+
+    // Video URLs - using local video files
+    const PHOTO_APPROVED_VIDEO = 'happy_video'; // Happy celebration video
+    const PHOTO_ZERO_VIDEO = 'sad_video'; // Sad video
+    const PHOTO_APPROVED_FALLBACK = 'happy.JPG'; // Fallback image if video missing
+    const PHOTO_ZERO_FALLBACK = 'sad.JPG'; // Fallback image if video missing
+
+    // Function to show video popup with optional fallback
+    function showVideoPopup(videoName, fallbackUrl) {
+      // Hide both elements first
+      photoVideo.style.display = 'none';
+      photoImage.style.display = 'none';
+      
+      // Try to load video first
+      const videoSources = photoVideo.querySelectorAll('source');
+      let videoLoaded = false;
+      
+      // Set video sources with different extensions
+      const extensions = ['mp4', 'webm', 'mov', 'avi'];
+      extensions.forEach((ext, index) => {
+        if (videoSources[index]) {
+          videoSources[index].src = `${videoName}.${ext}`;
+        }
+      });
+      
+      // Try to load the video
+      photoVideo.load();
+      
+      // Check if video can play
+      photoVideo.addEventListener('canplay', function onCanPlay() {
+        photoVideo.removeEventListener('canplay', onCanPlay);
+        videoLoaded = true;
+        photoVideo.style.display = 'block';
+        photoModal.style.display = 'flex';
+        photoVideo.play();
+      });
+      
+      // If video fails to load, show fallback image
+      photoVideo.addEventListener('error', function onVideoError() {
+        photoVideo.removeEventListener('error', onVideoError);
+        if (!videoLoaded && fallbackUrl) {
+          photoImage.onerror = null;
+          photoImage.src = fallbackUrl;
+          photoImage.style.display = 'block';
+          photoModal.style.display = 'flex';
+        }
+      });
+      
+      // Timeout fallback - if video doesn't load within 3 seconds, show image
+      setTimeout(() => {
+        if (!videoLoaded && fallbackUrl) {
+          photoImage.onerror = null;
+          photoImage.src = fallbackUrl;
+          photoImage.style.display = 'block';
+          photoModal.style.display = 'flex';
+        }
+      }, 3000);
+    }
+
+    // Function to show photo popup with optional fallback (for backward compatibility)
+    function showPhotoPopup(primaryUrl, fallbackUrl) {
+      // Hide video first
+      photoVideo.style.display = 'none';
+      // Reset previous error handler
+      photoImage.onerror = null;
+      if (fallbackUrl) {
+        photoImage.onerror = function onErrorOnce() {
+          photoImage.onerror = null;
+          photoImage.src = fallbackUrl;
+        };
+      }
+      photoImage.src = primaryUrl;
+      photoImage.style.display = 'block';
+      photoModal.style.display = 'flex';
+    }
+
+    // Function to hide photo popup
+    function hidePhotoPopup() {
+      photoModal.style.display = 'none';
+      // Pause video if playing
+      if (photoVideo && !photoVideo.paused) {
+        photoVideo.pause();
+      }
+      // Reset animation state
+      photoModal.style.animation = 'none';
+      photoModal.querySelector('.photo-modal-content').style.animation = 'none';
+      // Force reflow
+      photoModal.offsetHeight;
+      // Restore animations
+      photoModal.style.animation = '';
+      photoModal.querySelector('.photo-modal-content').style.animation = '';
+    }
+
+    // Add event listener for photo close button
+    photoCloseBtn.addEventListener('click', hidePhotoPopup);
+    photoModal.addEventListener('click', function(e) {
+      if (e.target === photoModal) {
+        hidePhotoPopup();
+      }
+    });
+
+    // Function to get URL parameters
+    function getUrlParameter(name) {
+      name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+      const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+      const results = regex.exec(location.search);
+      return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    // Function to check if phone number exists in invited list
+    async function checkInvitedGuest(phone) {
+      try {
+        const response = await fetch(INVITED_API);
+        if (!response.ok) return null;
+        
+        const invitedGuests = await response.json();
+        const guest = invitedGuests.find(g => g.phone === phone);
+        return guest;
+      } catch (error) {
+        console.error('Error fetching invited guests:', error);
+        return null;
+      }
+    }
+
+    // Function to display personalized greeting
+    async function displayPersonalizedGreeting() {
+      const phoneParam = getUrlParameter('phone');
+      if (phoneParam) {
+        const guest = await checkInvitedGuest(phoneParam);
+        if (guest && guest.name) {
+          personalizedGreeting.textContent = `${guest.name}! 👋`;
+          personalizedGreeting.style.display = 'block';
+        } else {
+          personalizedGreeting.textContent = 'היי! 👋';
+          personalizedGreeting.style.display = 'block';
+        }
+      } else {
+        // No phone parameter provided - show error message
+        confirmation.style.color = '#ef4444';
+        confirmation.textContent = 'מספר טלפון לא נמצא בכתובת האתר';
+        submitBtn.disabled = true;
+      }
+    }
+
+    // Show custom modal and return a Promise that resolves to true (update) or false (keep as is)
+    function showModal(prevGuests, newGuests) {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('custom-modal');
+        const msg = document.getElementById('modal-message');
+        const updateBtn = document.getElementById('modal-update');
+        const cancelBtn = document.getElementById('modal-cancel');
+        msg.innerHTML = `מספר זה כבר אישר הגעה עם <b>${prevGuests}</b> משתתפים.<br>האם לעדכן ל-<b>${newGuests}</b> משתתפים?`;
+        modal.style.display = 'flex';
+
+        function cleanup(result) {
+          modal.style.display = 'none';
+          updateBtn.removeEventListener('click', onUpdate);
+          cancelBtn.removeEventListener('click', onCancel);
+          resolve(result);
+        }
+        function onUpdate() { cleanup(true); }
+        function onCancel() { cleanup(false); }
+
+        updateBtn.addEventListener('click', onUpdate);
+        cancelBtn.addEventListener('click', onCancel);
+      });
+    }
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      confirmation.textContent = '';
+      const phone = getUrlParameter('phone');
+      const guests = form.guests.value.trim();
+
+      if (!phone) {
+        confirmation.style.color = '#ef4444';
+        confirmation.textContent = 'מספר טלפון לא נמצא בכתובת האתר';
+        return;
+      }
+      if (!phone.match(/^[0-9]{9,15}$/)) {
+        confirmation.style.color = '#ef4444';
+        confirmation.textContent = 'מספר טלפון לא תקין בכתובת האתר';
+        return;
+      }
+      if (!guests || isNaN(guests) || guests < 0 || guests > 10) {
+        confirmation.style.color = '#ef4444';
+        confirmation.textContent = 'אנא בחר מספר משתתפים תקין';
+        return;
+      }
+
+      // Show loading state - hide buttons and show single loader
+      submitBtn.disabled = true;
+      notComingBtn.disabled = true;
+      actionButtons.style.display = 'none';
+      globalLoader.style.display = 'flex';
+
+      try {
+        // Check for existing phone number
+        const checkRes = await fetch('https://sheetdb.io/api/v1/pimc3ptqia34k/search?phone=' + encodeURIComponent(phone));
+        let existing = [];
+        if (checkRes.ok) {
+          existing = await checkRes.json();
+        }
+        if (existing.length > 0) {
+          // Find the latest entry for this phone
+          const lastEntry = existing.reduce((latest, entry) => {
+            if (!latest) return entry;
+            return new Date(entry.timestamp) > new Date(latest.timestamp) ? entry : latest;
+          }, null);
+          const prevGuests = lastEntry && lastEntry.guests ? lastEntry.guests : '?';
+          const userWantsUpdate = await showModal(prevGuests, guests);
+          if (!userWantsUpdate) {
+            confirmation.style.color = '#ef4444';
+            confirmation.textContent = 'ההזנה בוטלה. הנתון הקודם נשמר.';
+            submitBtn.disabled = false;
+            notComingBtn.disabled = false;
+            actionButtons.style.display = 'flex';
+            globalLoader.style.display = 'none';
+            return;
+          }
+          // User wants to update: PATCH the existing row
+          const response = await fetch(
+            'https://sheetdb.io/api/v1/pimc3ptqia34k/phone/' + encodeURIComponent(phone),
+            {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                data: {
+                  guests: guests,
+                  timestamp: new Date().toISOString()
+                }
+              })
+            }
+          );
+          if (response.ok) {
+            confirmation.style.color = '#10b981';
+            confirmation.textContent = 'הנתון עודכן בהצלחה 🎊';
+            form.reset();
+            // Show video based on guest count
+            const guestCount = parseInt(guests);
+            if (guestCount >= 1) {
+              showVideoPopup(PHOTO_APPROVED_VIDEO, PHOTO_APPROVED_FALLBACK);
+            } else {
+              showVideoPopup(PHOTO_ZERO_VIDEO, PHOTO_ZERO_FALLBACK);
+            }
+          } else {
+            throw new Error();
+          }
+        } else {
+          // No existing phone: POST a new row
+          const response = await fetch('https://sheetdb.io/api/v1/pimc3ptqia34k', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              data: [
+                {
+                  phone: phone,
+                  guests: guests,
+                  timestamp: new Date().toISOString()
+                }
+              ]
+            })
+          });
+          if (response.ok) {
+            confirmation.style.color = '#10b981';
+            confirmation.textContent = 'תודה! ההגעה שלך נרשמה 🎊';
+            form.reset();
+            // Show video based on guest count
+            const guestCount = parseInt(guests);
+            if (guestCount >= 1) {
+              showVideoPopup(PHOTO_APPROVED_VIDEO, PHOTO_APPROVED_FALLBACK);
+            } else {
+              showVideoPopup(PHOTO_ZERO_VIDEO, PHOTO_ZERO_FALLBACK);
+            }
+          } else {
+            throw new Error();
+          }
+        }
+      } catch {
+        confirmation.style.color = '#ef4444';
+        confirmation.textContent = 'אירעה שגיאה בשליחה. נסה שוב בעוד רגע.';
+      } finally {
+        // Hide loading state
+        submitBtn.disabled = false;
+        notComingBtn.disabled = false;
+        actionButtons.style.display = 'flex';
+        globalLoader.style.display = 'none';
+      }
+    });
+
+    // Initialize personalized greeting on page load
+    displayPersonalizedGreeting();
+    
+    // Add event listener for "not coming" button
+    notComingBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      confirmation.textContent = '';
+      const phone = getUrlParameter('phone');
+      
+      if (!phone) {
+        confirmation.style.color = '#ef4444';
+        confirmation.textContent = 'מספר טלפון לא נמצא בכתובת האתר';
+        return;
+      }
+      if (!phone.match(/^[0-9]{9,15}$/)) {
+        confirmation.style.color = '#ef4444';
+        confirmation.textContent = 'מספר טלפון לא תקין בכתובת האתר';
+        return;
+      }
+
+      // Show loading state - hide buttons and show single loader
+      submitBtn.disabled = true;
+      notComingBtn.disabled = true;
+      actionButtons.style.display = 'none';
+      globalLoader.style.display = 'flex';
+
+      try {
+        // Check for existing phone number
+        const checkRes = await fetch('https://sheetdb.io/api/v1/pimc3ptqia34k/search?phone=' + encodeURIComponent(phone));
+        let existing = [];
+        if (checkRes.ok) {
+          existing = await checkRes.json();
+        }
+        if (existing.length > 0) {
+          // Find the latest entry for this phone
+          const lastEntry = existing.reduce((latest, entry) => {
+            if (!latest) return entry;
+            return new Date(entry.timestamp) > new Date(latest.timestamp) ? entry : latest;
+          }, null);
+          const prevGuests = lastEntry && lastEntry.guests ? lastEntry.guests : '?';
+          const userWantsUpdate = await showModal(prevGuests, '0');
+          if (!userWantsUpdate) {
+            confirmation.style.color = '#ef4444';
+            confirmation.textContent = 'ההזנה בוטלה. הנתון הקודם נשמר.';
+            submitBtn.disabled = false;
+            notComingBtn.disabled = false;
+            actionButtons.style.display = 'flex';
+            globalLoader.style.display = 'none';
+            return;
+          }
+          // User wants to update: PATCH the existing row
+          const response = await fetch(
+            'https://sheetdb.io/api/v1/pimc3ptqia34k/phone/' + encodeURIComponent(phone),
+            {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                data: {
+                  guests: '0',
+                  timestamp: new Date().toISOString()
+                }
+              })
+            }
+          );
+          if (response.ok) {
+            confirmation.style.color = '#10b981';
+            confirmation.textContent = 'הנתון עודכן בהצלחה 🎊';
+            form.reset();
+            // Show video for 0 guests
+            showVideoPopup(PHOTO_ZERO_VIDEO, PHOTO_ZERO_FALLBACK);
+          } else {
+            throw new Error();
+          }
+        } else {
+          // No existing phone: POST a new row
+          const response = await fetch('https://sheetdb.io/api/v1/pimc3ptqia34k', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              data: [
+                {
+                  phone: phone,
+                  guests: '0',
+                  timestamp: new Date().toISOString()
+                }
+              ]
+            })
+          });
+          if (response.ok) {
+            confirmation.style.color = '#10b981';
+            confirmation.textContent = 'תודה! ההגעה שלך נרשמה 🎊';
+            form.reset();
+            // Show video for 0 guests
+            showVideoPopup(PHOTO_ZERO_VIDEO, PHOTO_ZERO_FALLBACK);
+          } else {
+            throw new Error();
+          }
+        }
+      } catch {
+        confirmation.style.color = '#ef4444';
+        confirmation.textContent = 'אירעה שגיאה בשליחה. נסה שוב בעוד רגע.';
+      } finally {
+        // Hide loading state
+        submitBtn.disabled = false;
+        notComingBtn.disabled = false;
+        actionButtons.style.display = 'flex';
+        globalLoader.style.display = 'none';
+      }
+    });
+    
+    // Add event listener for "not sure" button
+    notSureBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // Add button press animation
+      notSureBtn.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        notSureBtn.style.transform = 'scale(1)';
+      }, 150);
+      
+      // Show popup modal with enhanced styling
+      modalMessage.innerHTML = `
+        <div style="font-size: 1.4rem; font-weight: 600; color: #ea580c; margin-bottom: 0.5rem;">
+          תודה שהודעת!
+        </div>
+        <div style="font-size: 1rem; color: #6b7280; font-weight: 400;">
+          נשמח לשמוע ממך בהמשך
+        </div>
+      `;
+      
+      // Add styled classes for animations
+      customModal.classList.add('styled');
+      customModal.querySelector('.modal-content').classList.add('styled');
+      customModal.style.display = 'flex';
+      
+      // Hide the modal buttons since we only need to show the message
+      document.querySelector('.modal-actions').style.display = 'none';
+      
+      // Add click handler to close modal when clicking outside
+      const closeModal = () => {
+        // Remove styled classes
+        customModal.classList.remove('styled');
+        customModal.querySelector('.modal-content').classList.remove('styled');
+        customModal.style.display = 'none';
+        document.querySelector('.modal-actions').style.display = 'flex'; // Restore buttons for future use
+        customModal.removeEventListener('click', closeModal);
+      };
+      
+      // Close modal when clicking on backdrop
+      customModal.addEventListener('click', function(e) {
+        if (e.target === customModal) {
+          closeModal();
+        }
+      });
+      
+      // Auto-close after 4 seconds (increased for better UX)
+      setTimeout(closeModal, 4000);
+    });
+  </script>
+</body>
+</html>

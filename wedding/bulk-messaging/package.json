@@ -1,0 +1,25 @@
+{
+  "name": "bulk-whatsapp-sender",
+  "version": "1.0.0",
+  "description": "Bulk WhatsApp message sender for wedding invitations",
+  "main": "bulk-whatsapp-sender.js",
+  "scripts": {
+    "start": "node bulk-whatsapp-sender.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "whatsapp",
+    "bulk",
+    "messaging",
+    "twilio",
+    "wedding"
+  ],
+  "author": "איה ועידו",
+  "license": "MIT",
+  "dependencies": {
+    "twilio": "^4.19.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+} 

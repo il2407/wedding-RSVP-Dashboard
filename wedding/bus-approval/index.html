@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>איה ועידו - הרשמה להסעה</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Heebo', Arial, sans-serif;
+      background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 25%, #fdba74 50%, #fb923c 75%, #f97316 100%);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(251, 146, 60, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(245, 101, 101, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 32px;
+      box-shadow: 
+        0 20px 60px rgba(249, 115, 22, 0.15),
+        0 8px 32px rgba(251, 146, 60, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      padding: 3rem 2.5rem 2.5rem 2.5rem;
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      direction: rtl;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #f97316, #ea580c, #dc2626, #f97316);
+      background-size: 400% 100%;
+      animation: shimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .bus-header {
+      margin-bottom: 2.5rem;
+      position: relative;
+      animation: slideInUp 0.8s ease-out;
+    }
+    
+    .bus-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #f97316, #ea580c, #dc2626);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.2rem;
+    }
+    
+    .wedding-sticker {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      animation: tilt 1s ease-in-out infinite;
+      filter: drop-shadow(0 4px 8px rgba(249, 115, 22, 0.3));
+    }
+    
+    @keyframes tilt {
+      0%, 100% { transform: rotate(-5deg); }
+      50% { transform: rotate(5deg); }
+    }
+    
+    .bus-subtitle {
+      font-size: 1.1rem;
+      color: #6b7280;
+      font-weight: 400;
+      margin-bottom: 1rem;
+    }
+    
+    .bus-info {
+      display: inline-block;
+      background: linear-gradient(135deg, #fed7aa, #fdba74);
+      color: #ea580c;
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1rem;
+      border: 1px solid rgba(234, 88, 12, 0.2);
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+      animation: slideInUp 0.8s ease-out 0.2s both;
+    }
+    
+    .form-container {
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 20px;
+      padding: 2rem;
+      border: 1px solid rgba(249, 115, 22, 0.1);
+      backdrop-filter: blur(10px);
+      animation: slideInUp 0.8s ease-out 1.4s both;
+      transition: all 0.3s ease;
+    }
+    
+    .form-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(249, 115, 22, 0.15);
+    }
+    
+    .form-section {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 16px;
+      border: 1px solid rgba(249, 115, 22, 0.1);
+    }
+    
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #ea580c;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.8rem;
+      font-weight: 600;
+      color: #ea580c;
+      font-size: 1.1rem;
+      text-align: right;
+    }
+    
+    input[type="text"], input[type="tel"] {
+      width: 100%;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.5rem;
+      border: 2px solid rgba(249, 115, 22, 0.2);
+      border-radius: 16px;
+      font-size: 1.1rem;
+      background: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+      direction: rtl;
+      font-weight: 500;
+    }
+    
+    input[type="text"]:focus, input[type="tel"]:focus {
+      outline: none;
+      border-color: #f97316;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+      transform: translateY(-2px) scale(1.02);
+    }
+    
+    select {
+      width: 100%;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.5rem;
+      border: 2px solid rgba(249, 115, 22, 0.2);
+      border-radius: 16px;
+      font-size: 1.1rem;
+      background: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+      direction: rtl;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    
+    select:focus {
+      outline: none;
+      border-color: #f97316;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+      transform: translateY(-2px) scale(1.02);
+    }
+    
+    .tab-navigation {
+      display: flex;
+      margin-bottom: 2rem;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.1);
+    }
+    
+    .tab-btn {
+      flex: 1;
+      padding: 1rem 1.5rem;
+      background: rgba(255, 255, 255, 0.5);
+      border: none;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-bottom: 3px solid transparent;
+    }
+    
+    .tab-btn.active {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      border-bottom-color: #dc2626;
+    }
+    
+    .tab-btn:hover:not(.active) {
+      background: rgba(249, 115, 22, 0.1);
+      color: #ea580c;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .checkbox-container input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: #f97316;
+    }
+    
+    .checkbox-container label {
+      margin-bottom: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #ea580c;
+    }
+    
+    button {
+      width: 100%;
+      padding: 1.2rem 0;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      font-size: 1.3rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 24px rgba(249, 115, 22, 0.3);
+      position: relative;
+      overflow: hidden;
+      letter-spacing: 0.5px;
+    }
+    
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    button:hover::before {
+      left: 100%;
+    }
+    
+    button:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 32px rgba(249, 115, 22, 0.4);
+    }
+    
+    button:active {
+      transform: translateY(-1px) scale(0.98);
+    }
+    
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .confirmation {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      min-height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+    
+    .confirmation.success {
+      color: #059669;
+      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+      border: 1px solid rgba(5, 150, 105, 0.2);
+    }
+    
+    .confirmation.error {
+      color: #dc2626;
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+    
+    .loading {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 1rem;
+    }
+    
+    .loading svg {
+      width: 28px;
+      height: 28px;
+    }
+    
+    .loading span {
+      color: #6b7280;
+      font-weight: 600;
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 2rem 1.5rem 2rem 1.5rem;
+        max-width: 95vw;
+        margin: 1rem;
+      }
+      
+      .bus-title {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="bus-header">
+      <h1 class="bus-title">
+        <img src="sticker.png" alt="sticker" class="wedding-sticker">
+        רישום להסעה 
+        <img src="stickerido.png" alt="sticker" class="wedding-sticker">
+      </h1>
+      <p class="bus-subtitle">החתונה של איה ועידו</p>
+        <div class="bus-info">
+          מכיכר הבימה בתל אביב <br>
+          לחתונה שבמזכרת בתיה<br>
+          🎊<br>
+          יוצאת בשעה 13:15<br>
+          חוזרת בשעה 21:30
+        </div>
+    </div>
+    
+    <div class="form-container">
+      <!-- Tab Navigation -->
+      <div class="tab-navigation" style="display: none;">
+        <button type="button" class="tab-btn active" data-tab="registration">הרשמה להסעה</button>
+        <button type="button" class="tab-btn" data-tab="attendance">אני באוטובוס</button>
+      </div>
+      
+      <!-- Registration Tab -->
+      <div id="registration-tab" class="tab-content active">
+        <form id="bus-form" autocomplete="off">
+          <!-- Personal Information Section -->
+          <div class="form-section">
+            <h3 class="section-title">פרטים אישיים</h3>
+            <label for="fullName">שם מלא</label>
+            <input type="text" id="fullName" name="fullName" required>
+            
+            <label for="phone">מספר טלפון</label>
+            <input type="tel" id="phone" name="phone" required>
+            <div style="
+              background: linear-gradient(135deg, #fef3c7, #fde68a);
+              color: #92400e;
+              font-size: 0.9rem;
+              font-weight: 500;
+              text-align: center;
+              margin-top: 0.5rem;
+              padding: 0.8rem 1rem;
+              border-radius: 12px;
+              border: 1px solid rgba(251, 191, 36, 0.3);
+              box-shadow: 0 2px 8px rgba(251, 191, 36, 0.15);
+            ">
+               מספר הטלפון הוא המזהה שלך - תמיד אפשר לעדכן את מספר המגיעים! 💡
+            </div>
+          </div>
+          
+          <!-- Going to Wedding Section -->
+          <div class="form-section">
+            <h3 class="section-title">🎊 בדרך לחתונה</h3>
+            <label for="goingCount">כמה אנשים תהיו בהלוך?</label>
+            <select id="goingCount" name="goingCount" required>
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+          
+          <!-- Return from Wedding Section -->
+          <div class="form-section">
+            <h3 class="section-title">🏠 בדרך הביתה</h3>
+            <label for="returnCount">כמה אנשים תהיו בחזור?</label>
+            <select id="returnCount" name="returnCount" required>
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+          
+          <button type="submit" id="submit-btn">
+            <span id="btn-text">הרשמה</span>
+            <span id="btn-spinner" style="display:none; margin-right:8px; vertical-align:middle;">
+              <svg width="20" height="20" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="#fff">
+                <g fill="none" fill-rule="evenodd">
+                  <g transform="translate(1 1)" stroke-width="3">
+                    <circle stroke-opacity=".3" cx="18" cy="18" r="18"/>
+                    <path d="M36 18c0-9.94-8.06-18-18-18">
+                      <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="1s" repeatCount="indefinite"/>
+                    </path>
+                  </g>
+                </g>
+              </svg>
+            </span>
+          </button>
+        </form>
+      </div>
+      
+      <!-- Attendance Tab -->
+      <div id="attendance-tab" class="tab-content" style="display: none;">
+        <form id="attendance-form" autocomplete="off">
+          <!-- Personal Information Section -->
+          <div class="form-section">
+            <h3 class="section-title">פרטים אישיים</h3>
+            <label for="attendanceName">שם מלא</label>
+            <input type="text" id="attendanceName" name="attendanceName" required>
+            
+            <label for="attendancePhone">מספר טלפון</label>
+            <input type="tel" id="attendancePhone" name="attendancePhone" required>
+          </div>
+          
+          <!-- Bus Attendance Section -->
+          <div class="form-section">
+            <h3 class="section-title">אישור נוכחות באוטובוס</h3>
+            
+            <div class="checkbox-container">
+              <input type="checkbox" id="onBusGoing" name="onBusGoing">
+              <label for="onBusGoing">אני על האוטובוס בהלוך</label>
+            </div>
+            
+            <div class="checkbox-container">
+              <input type="checkbox" id="onBusReturn" name="onBusReturn">
+              <label for="onBusReturn">אני על האוטובוס בחזור</label>
+            </div>
+          </div>
+          
+          <button type="submit" id="attendance-submit-btn">
+            <span id="attendance-btn-text">שלח אישור נוכחות</span>
+            <span id="attendance-btn-spinner" style="display:none; margin-right:8px; vertical-align:middle;">
+              <svg width="20" height="20" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="#fff">
+                <g fill="none" fill-rule="evenodd">
+                  <g transform="translate(1 1)" stroke-width="3">
+                    <circle stroke-opacity=".3" cx="18" cy="18" r="18"/>
+                    <path d="M36 18c0-9.94-8.06-18-18-18">
+                      <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="1s" repeatCount="indefinite"/>
+                    </path>
+                  </g>
+                </g>
+              </svg>
+            </span>
+          </button>
+        </form>
+      </div>
+      
+      <div id="loading" class="loading">
+        <svg width="28" height="28" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="#ea580c">
+          <g fill="none" fill-rule="evenodd">
+            <g transform="translate(1 1)" stroke-width="3">
+              <circle stroke-opacity=".2" cx="18" cy="18" r="18"/>
+              <path d="M36 18c0-9.94-8.06-18-18-18">
+                <animateTransform attributeName="transform" type="rotate" from="0 18 18" to="360 18 18" dur="0.9s" repeatCount="indefinite"/>
+              </path>
+            </g>
+          </g>
+        </svg>
+        <span>שולח...</span>
+      </div>
+    </div>
+    
+    <div class="confirmation" id="confirmation"></div>
+  </div>
+  
+  <script>
+    // SheetDB API endpoint
+    const SHEETDB_API = 'https://sheetdb.io/api/v1/xuaafb188ec30';
+    
+    const form = document.getElementById('bus-form');
+    const attendanceForm = document.getElementById('attendance-form');
+    const confirmation = document.getElementById('confirmation');
+    const submitBtn = document.getElementById('submit-btn');
+    const attendanceSubmitBtn = document.getElementById('attendance-submit-btn');
+    const btnText = document.getElementById('btn-text');
+    const btnSpinner = document.getElementById('btn-spinner');
+    const attendanceBtnText = document.getElementById('attendance-btn-text');
+    const attendanceBtnSpinner = document.getElementById('attendance-btn-spinner');
+    const loading = document.getElementById('loading');
+    
+    // Tab functionality
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+        
+        // Remove active class from all tabs and contents
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        
+        // Add active class to clicked tab and corresponding content
+        btn.classList.add('active');
+        document.getElementById(targetTab + '-tab').classList.add('active');
+      });
+    });
+    
+    // Function to get URL parameters
+    function getUrlParameter(name) {
+      name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+      const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+      const results = regex.exec(location.search);
+      return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+    
+    // Auto-fill form from URL parameters
+    function autoFillFromUrl() {
+      const phone = getUrlParameter('phone');
+      const name = getUrlParameter('name');
+      
+      if (phone) {
+        document.getElementById('phone').value = phone;
+      }
+      if (name) {
+        document.getElementById('fullName').value = name;
+      }
+    }
+    
+    // Validate phone number
+    function validatePhone(phone) {
+      return /^[0-9]{9,15}$/.test(phone);
+    }
+    
+    // Show loading state
+    function showLoading() {
+      submitBtn.disabled = true;
+      btnText.style.display = 'none';
+      btnSpinner.style.display = 'inline';
+      loading.style.display = 'flex';
+    }
+    
+    // Hide loading state
+    function hideLoading() {
+      submitBtn.disabled = false;
+      btnText.style.display = 'inline';
+      btnSpinner.style.display = 'none';
+      loading.style.display = 'none';
+    }
+    
+    // Show confirmation message
+    function showConfirmation(message, isSuccess = true) {
+      confirmation.textContent = message;
+      confirmation.className = `confirmation ${isSuccess ? 'success' : 'error'}`;
+    }
+    
+    // Show modal for update confirmation
+    function showUpdateModal(prevGoing, newGoing, prevReturn, newReturn) {
+      return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(8px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        `;
+        
+        modal.innerHTML = `
+          <div style="
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            padding: 2.5rem 2rem 2rem 2rem;
+            max-width: 400px;
+            width: 90vw;
+            text-align: center;
+            direction: rtl;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+          ">
+            <div style="
+              color: #374151;
+              font-size: 1.2rem;
+              margin-bottom: 2rem;
+              line-height: 1.6;
+              font-weight: 500;
+            ">
+              אישרת כבר שתהיו <strong>${prevGoing}</strong> בהסעה הלוך ו-<strong>${prevReturn}</strong> בהסעה חזור<br><br>
+              תרצה לעדכן ל-<strong>${newGoing}</strong> בהסעה הלוך ו-<strong>${newReturn}</strong> בהסעה חזור?
+            </div>
+            <div style="display: flex; justify-content: center; gap: 1rem;">
+              <button id="modal-update" style="
+                padding: 0.8rem 1.5rem;
+                border-radius: 12px;
+                border: none;
+                font-size: 1.1rem;
+                font-weight: 600;
+                cursor: pointer;
+                background: linear-gradient(135deg, #f97316, #ea580c);
+                color: #fff;
+                box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+                min-width: 100px;
+              ">עדכן</button>
+              <button id="modal-cancel" style="
+                padding: 0.8rem 1.5rem;
+                border-radius: 12px;
+                border: none;
+                font-size: 1.1rem;
+                font-weight: 600;
+                cursor: pointer;
+                background: rgba(255, 255, 255, 0.9);
+                color: #6b7280;
+                border: 1px solid rgba(107, 114, 128, 0.2);
+                min-width: 100px;
+              ">ביטול</button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const updateBtn = modal.querySelector('#modal-update');
+        const cancelBtn = modal.querySelector('#modal-cancel');
+        
+        function cleanup(result) {
+          document.body.removeChild(modal);
+          resolve(result);
+        }
+        
+        updateBtn.addEventListener('click', () => cleanup(true));
+        cancelBtn.addEventListener('click', () => cleanup(false));
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) cleanup(false);
+        });
+      });
+    }
+    
+    // Form submission handler
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      const data = {
+        'שם מלא': formData.get('fullName').trim(),
+        'טלפון': formData.get('phone').trim(),
+        'כמות אנשים בהלוך': parseInt(formData.get('goingCount')),
+        'כמות אנשים בחזור': parseInt(formData.get('returnCount')),
+        'הגיע הלוך': formData.get('goingConfirmed') === 'on',
+        'הגיע חזור': formData.get('returnConfirmed') === 'on'
+      };
+      
+      // Validation
+      if (!data['שם מלא']) {
+        showConfirmation('אנא הזן שם מלא', false);
+        return;
+      }
+      
+      if (!data['טלפון'] || !validatePhone(data['טלפון'])) {
+        showConfirmation('אנא הזן מספר טלפון תקין', false);
+        return;
+      }
+      
+      if (data['כמות אנשים בהלוך'] < 0 || data['כמות אנשים בחזור'] < 0) {
+        showConfirmation('אנא בחר מספר אנשים תקין', false);
+        return;
+      }
+      
+      showLoading();
+      
+      try {
+        // Check if phone number already exists
+        const checkResponse = await fetch(`${SHEETDB_API}/search?טלפון=${encodeURIComponent(data['טלפון'])}`);
+        let existing = [];
+        if (checkResponse.ok) {
+          existing = await checkResponse.json();
+        }
+        
+        if (existing.length > 0) {
+          // Find the latest entry for this phone
+          const lastEntry = existing.reduce((latest, entry) => {
+            if (!latest) return entry;
+            return new Date(entry.timestamp || 0) > new Date(latest.timestamp || 0) ? entry : latest;
+          }, null);
+          
+          const prevGoing = lastEntry && lastEntry['כמות אנשים בהלוך'] ? lastEntry['כמות אנשים בהלוך'] : '0';
+          const prevReturn = lastEntry && lastEntry['כמות אנשים בחזור'] ? lastEntry['כמות אנשים בחזור'] : '0';
+          
+          const userWantsUpdate = await showUpdateModal(prevGoing, data['כמות אנשים בהלוך'], prevReturn, data['כמות אנשים בחזור']);
+          
+          if (!userWantsUpdate) {
+            showConfirmation('ההרשמה בוטלה. הנתונים הקודמים נשמרו.', false);
+            hideLoading();
+            return;
+          }
+          
+          // Update existing entry
+          const response = await fetch(`${SHEETDB_API}/טלפון/${encodeURIComponent(data['טלפון'])}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              data: data
+            })
+          });
+          
+          if (response.ok) {
+            showConfirmation('ההרשמה עודכנה בהצלחה! 🚌', true);
+            form.reset();
+          } else {
+            throw new Error('Failed to update');
+          }
+        } else {
+          // Create new entry
+          const response = await fetch(SHEETDB_API, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              data: [data]
+            })
+          });
+          
+          if (response.ok) {
+            showConfirmation('ההרשמה נשלחה בהצלחה! 🚌', true);
+            form.reset();
+          } else {
+            throw new Error('Failed to create');
+          }
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showConfirmation('אירעה שגיאה בשליחה. נסה שוב בעוד רגע.', false);
+      } finally {
+        hideLoading();
+      }
+    });
+    
+    // Attendance form submission handler
+    attendanceForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(attendanceForm);
+      const data = {
+        'שם מלא': formData.get('attendanceName').trim(),
+        'טלפון': formData.get('attendancePhone').trim(),
+        'כמות אנשים בהלוך': 0,
+        'כמות אנשים בחזור': 0,
+        'הגיע הלוך': formData.get('onBusGoing') === 'on',
+        'הגיע חזור': formData.get('onBusReturn') === 'on'
+      };
+      
+      // Validation
+      if (!data['שם מלא']) {
+        showConfirmation('אנא הזן שם מלא', false);
+        return;
+      }
+      
+      if (!data['טלפון'] || !validatePhone(data['טלפון'])) {
+        showConfirmation('אנא הזן מספר טלפון תקין', false);
+        return;
+      }
+      
+      if (!data['הגיע הלוך'] && !data['הגיע חזור']) {
+        showConfirmation('אנא בחר לפחות אפשרות אחת', false);
+        return;
+      }
+      
+      showLoading();
+      
+      try {
+        // Check if phone number already exists
+        const checkResponse = await fetch(`${SHEETDB_API}/search?טלפון=${encodeURIComponent(data['טלפון'])}`);
+        let existing = [];
+        if (checkResponse.ok) {
+          existing = await checkResponse.json();
+        }
+        
+        if (existing.length > 0) {
+          // Update existing entry
+          const response = await fetch(`${SHEETDB_API}/טלפון/${encodeURIComponent(data['טלפון'])}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              data: data
+            })
+          });
+          
+          if (response.ok) {
+            showConfirmation('אישור הנוכחות עודכן בהצלחה! 🚌', true);
+            attendanceForm.reset();
+          } else {
+            throw new Error('Failed to update');
+          }
+        } else {
+          // Create new entry
+          const response = await fetch(SHEETDB_API, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              data: [data]
+            })
+          });
+          
+          if (response.ok) {
+            showConfirmation('אישור הנוכחות נשלח בהצלחה! 🚌', true);
+            attendanceForm.reset();
+          } else {
+            throw new Error('Failed to create');
+          }
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showConfirmation('אירעה שגיאה בשליחה. נסה שוב בעוד רגע.', false);
+      } finally {
+        hideLoading();
+      }
+    });
+    
+    // Auto-fill form on page load
+    autoFillFromUrl();
+  </script>
+</body>
+</html>

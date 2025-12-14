@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bulk WhatsApp Sender - איה ועידו</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Heebo', Arial, sans-serif;
+            background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 25%, #fdba74 50%, #fb923c 75%, #f97316 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(249, 115, 22, 0.15);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #ea580c;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #ea580c;
+        }
+        
+        textarea, input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid rgba(249, 115, 22, 0.2);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+        
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: #f97316;
+            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .phone-list {
+            min-height: 200px;
+            font-family: monospace;
+        }
+        
+        .preview {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .preview h3 {
+            color: #ea580c;
+            margin-bottom: 0.5rem;
+        }
+        
+        .preview-message {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .send-btn {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: #fff;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(249, 115, 22, 0.3);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .status.success {
+            background: #d1fae5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .status.error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        
+        .progress {
+            margin-top: 1rem;
+            background: #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: linear-gradient(90deg, #f97316, #ea580c);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bulk WhatsApp Sender - איה ועידו</h1>
+        
+        <div class="form-group">
+            <label for="message-template">Message Template:</label>
+            <textarea id="message-template" placeholder="Enter your message template here. Use {phone} to insert the phone number and {link} to insert the personalized link.">
+היי! 
+
+שמחים להזמין אתכם לחתונה שלנו! 🎊
+
+בתאריך: 7.11.2024
+בשעה: 14:00
+
+לחצו על הקישור למטה כדי לאשר הגעה:
+{link}
+
+נשמח לראותכם!
+
+איה ועידו</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="phone-numbers">Phone Numbers (one per line):</label>
+            <textarea id="phone-numbers" class="phone-list" placeholder="0541234567&#10;0547654321&#10;0509876543"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="base-url">Base URL:</label>
+            <input type="text" id="base-url" value="https://fluffy-salmiakki-980cb0.netlify.app/" placeholder="https://your-domain.com/">
+        </div>
+        
+        <button class="send-btn" onclick="previewMessages()">Preview Messages</button>
+        
+        <div id="preview-container" style="display: none;">
+            <div class="preview">
+                <h3>Message Preview:</h3>
+                <div id="preview-messages"></div>
+            </div>
+            <button class="send-btn" onclick="sendBulkMessages()">Send Bulk Messages</button>
+        </div>
+        
+        <div id="status"></div>
+        <div class="progress" id="progress" style="display: none;">
+            <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+        </div>
+        
+        <!-- Next Chat Button - Always visible -->
+        <button id="next-chat-btn" class="send-btn" style="display: none; background: linear-gradient(135deg, #059669, #047857);" onclick="openNextChat()">
+            ➡️ Next Chat
+        </button>
+    </div>
+
+    <script>
+        function previewMessages() {
+            const template = document.getElementById('message-template').value;
+            const phoneNumbers = document.getElementById('phone-numbers').value.split('\n').filter(phone => phone.trim());
+            const baseUrl = document.getElementById('base-url').value;
+            
+            if (!template || phoneNumbers.length === 0) {
+                showStatus('Please fill in both message template and phone numbers.', 'error');
+                return;
+            }
+            
+            const previewContainer = document.getElementById('preview-container');
+            const previewMessages = document.getElementById('preview-messages');
+            previewMessages.innerHTML = '';
+            
+            phoneNumbers.forEach((phone, index) => {
+                const cleanPhone = phone.trim();
+                if (cleanPhone) {
+                    const personalizedLink = `${baseUrl}?phone=${cleanPhone}`;
+                    const message = template
+                        .replace(/{phone}/g, cleanPhone)
+                        .replace(/{link}/g, personalizedLink);
+                    
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'preview-message';
+                    messageDiv.innerHTML = `
+                        <strong>To: ${cleanPhone}</strong><br>
+                        <div style="margin-top: 0.5rem; white-space: pre-wrap;">${message}</div>
+                    `;
+                    previewMessages.appendChild(messageDiv);
+                }
+            });
+            
+            previewContainer.style.display = 'block';
+            showStatus(`Preview generated for ${phoneNumbers.length} messages.`, 'success');
+        }
+        
+        function sendBulkMessages() {
+            const template = document.getElementById('message-template').value;
+            const phoneNumbers = document.getElementById('phone-numbers').value.split('\n').filter(phone => phone.trim());
+            const baseUrl = document.getElementById('base-url').value;
+            
+            if (!template || phoneNumbers.length === 0) {
+                showStatus('Please fill in both message template and phone numbers.', 'error');
+                return;
+            }
+            
+            const sendBtn = document.querySelector('.send-btn');
+            const progress = document.getElementById('progress');
+            const progressBar = document.getElementById('progress-bar');
+            
+            sendBtn.disabled = true;
+            progress.style.display = 'block';
+            
+            let sentCount = 0;
+            const totalCount = phoneNumbers.length;
+            
+            // Create all WhatsApp URLs first
+            const whatsappUrls = [];
+            phoneNumbers.forEach((phone, index) => {
+                const cleanPhone = phone.trim();
+                if (cleanPhone) {
+                    const personalizedLink = `${baseUrl}?phone=${cleanPhone}`;
+                    const message = template
+                        .replace(/{phone}/g, cleanPhone)
+                        .replace(/{link}/g, personalizedLink);
+                    
+                    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+                    whatsappUrls.push({
+                        phone: cleanPhone,
+                        url: whatsappUrl,
+                        message: message
+                    });
+                }
+            });
+            
+            // Show options to user
+            showWhatsAppOptions(whatsappUrls);
+            
+            // Reset UI
+            sendBtn.disabled = false;
+            progress.style.display = 'none';
+        }
+        
+        function showWhatsAppOptions(whatsappUrls) {
+            const statusDiv = document.getElementById('status');
+            
+            // Create options container
+            const optionsContainer = document.createElement('div');
+            optionsContainer.style.cssText = `
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 1.5rem;
+                margin-top: 1rem;
+            `;
+            
+            optionsContainer.innerHTML = `
+                <h3 style="color: #ea580c; margin-bottom: 1rem;">WhatsApp Sending Options:</h3>
+                <div style="margin-bottom: 1rem;">
+                    <button onclick="openAllWhatsAppChats(${JSON.stringify(whatsappUrls).replace(/"/g, '&quot;')})" 
+                            style="background: linear-gradient(135deg, #f97316, #ea580c); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; margin-right: 0.5rem; cursor: pointer;">
+                        📱 Open WhatsApp Chats (One by One)
+                    </button>
+                    <button onclick="copyAllMessages(${JSON.stringify(whatsappUrls).replace(/"/g, '&quot;')})" 
+                            style="background: #6b7280; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; margin-right: 0.5rem; cursor: pointer;">
+                        📋 Copy All Messages
+                    </button>
+                    <button onclick="downloadMessages(${JSON.stringify(whatsappUrls).replace(/"/g, '&quot;')})" 
+                            style="background: #059669; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; cursor: pointer;">
+                        💾 Download Messages
+                    </button>
+                </div>
+                <div style="font-size: 0.9rem; color: #6b7280; background: #fef3c7; padding: 0.8rem; border-radius: 8px; border: 1px solid #f59e0b;">
+                    <strong>📱 WhatsApp Instructions:</strong><br>
+                    • Click "Open WhatsApp Chats" to start<br>
+                    • Each chat will open one at a time<br>
+                    • Click "Next Chat" to open the next one<br>
+                    • Send the message in each chat window<br>
+                    • Allow popups if your browser asks
+                </div>
+            `;
+            
+            statusDiv.innerHTML = '';
+            statusDiv.appendChild(optionsContainer);
+        }
+        
+        function openAllWhatsAppChats(whatsappUrls) {
+            // Store the URLs globally for sequential opening
+            window.whatsappUrls = whatsappUrls;
+            window.currentIndex = 0;
+            
+            // Show the Next Chat button
+            const nextBtn = document.getElementById('next-chat-btn');
+            nextBtn.style.display = 'block';
+            nextBtn.disabled = false;
+            
+            // Start with the first one
+            openNextChat();
+        }
+        
+        function openNextChat() {
+            if (window.currentIndex >= window.whatsappUrls.length) {
+                showStatus('All WhatsApp chats have been opened!', 'success');
+                const nextBtn = document.getElementById('next-chat-btn');
+                nextBtn.style.display = 'none';
+                return;
+            }
+            
+            const currentItem = window.whatsappUrls[window.currentIndex];
+            const windowName = `whatsapp_${window.currentIndex}`;
+            
+            // Open the current chat
+            const popup = window.open(currentItem.url, windowName, 'width=600,height=800');
+            
+            if (popup) {
+                showStatus(`✅ Opened chat ${window.currentIndex + 1}/${window.whatsappUrls.length} for ${currentItem.phone}. Send the message, then click "Next Chat" below.`, 'success');
+                
+                // Update button text and increment index
+                const nextBtn = document.getElementById('next-chat-btn');
+                window.currentIndex++; // Move to next index
+                
+                if (window.currentIndex < window.whatsappUrls.length) {
+                    nextBtn.textContent = `➡️ Next Chat (${window.currentIndex + 1}/${window.whatsappUrls.length})`;
+                    nextBtn.disabled = false;
+                } else {
+                    nextBtn.textContent = '✅ All Done!';
+                    nextBtn.disabled = true;
+                }
+            } else {
+                showStatus('❌ Popup blocked! Please allow popups and try again.', 'error');
+            }
+        }
+        
+        function copyAllMessages(whatsappUrls) {
+            let allMessages = '';
+            whatsappUrls.forEach((item, index) => {
+                allMessages += `=== Message ${index + 1} - ${item.phone} ===\n`;
+                allMessages += item.message;
+                allMessages += '\n\n';
+            });
+            
+            navigator.clipboard.writeText(allMessages).then(() => {
+                showStatus('All messages copied to clipboard!', 'success');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = allMessages;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showStatus('All messages copied to clipboard!', 'success');
+            });
+        }
+        
+        function downloadMessages(whatsappUrls) {
+            let csvContent = 'Phone Number,Message,WhatsApp URL\n';
+            whatsappUrls.forEach(item => {
+                const escapedMessage = item.message.replace(/"/g, '""');
+                const escapedUrl = item.url.replace(/"/g, '""');
+                csvContent += `"${item.phone}","${escapedMessage}","${escapedUrl}"\n`;
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'whatsapp_messages.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showStatus('Messages downloaded as CSV file!', 'success');
+        }
+        
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+        }
+    </script>
+</body>
+</html> 

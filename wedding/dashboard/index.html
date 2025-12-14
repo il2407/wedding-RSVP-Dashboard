@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>דשבורד אישורי הגעה - איה ועידו</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Heebo', Arial, sans-serif;
+      background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 25%, #fdba74 50%, #fb923c 75%, #f97316 100%);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(251, 146, 60, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(245, 101, 101, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    .dashboard-container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 32px;
+      box-shadow: 
+        0 20px 60px rgba(249, 115, 22, 0.15),
+        0 8px 32px rgba(251, 146, 60, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      padding: 3rem 2.5rem 2.5rem 2.5rem;
+      max-width: 800px;
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+      direction: rtl;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      margin-top: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .dashboard-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #f97316, #ea580c, #dc2626, #f97316);
+      background-size: 400% 100%;
+      animation: shimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-10px); }
+      60% { transform: translateY(-5px); }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+    
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #f97316, #ea580c, #dc2626);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 2rem;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      animation: slideInUp 0.8s ease-out;
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+    
+    .stat-box {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 1.5rem 1.2rem;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(249, 115, 22, 0.1);
+      border: 1px solid rgba(249, 115, 22, 0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      animation: slideInUp 0.8s ease-out;
+    }
+    
+    .stat-box:nth-child(1) { animation-delay: 0.1s; }
+    .stat-box:nth-child(2) { animation-delay: 0.2s; }
+    .stat-box:nth-child(3) { animation-delay: 0.3s; }
+    .stat-box:nth-child(4) { animation-delay: 0.4s; }
+    
+    .stat-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #f97316, #ea580c);
+      animation: shimmer 2s ease-in-out infinite;
+    }
+    
+    .stat-box:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(249, 115, 22, 0.2);
+    }
+    
+    .stat-box:hover .stat-value {
+      animation: pulse 0.6s ease-in-out;
+    }
+    
+    .stat-label {
+      color: #6b7280;
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 0.8rem;
+      display: block;
+    }
+    
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.2rem;
+      line-height: 1;
+      transition: all 0.3s ease;
+    }
+    
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 16px;
+      padding: 0.5rem;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(249, 115, 22, 0.1);
+      animation: slideInUp 0.8s ease-out 0.5s both;
+    }
+    
+    .tab-btn {
+      background: transparent;
+      color: #6b7280;
+      border: none;
+      border-radius: 12px;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      outline: none;
+      min-width: 140px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .tab-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.1), transparent);
+      transition: left 0.5s;
+    }
+    
+    .tab-btn:hover::before {
+      left: 100%;
+    }
+    
+    .tab-btn.active {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+      animation: pulse 0.6s ease-in-out;
+    }
+    
+    .tab-btn:hover:not(.active) {
+      background: rgba(249, 115, 22, 0.1);
+      color: #ea580c;
+      transform: translateY(-2px);
+    }
+    
+    .table-container {
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 20px;
+      padding: 1.5rem;
+      border: 1px solid rgba(249, 115, 22, 0.1);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(249, 115, 22, 0.1);
+      animation: slideInUp 0.8s ease-out 0.7s both;
+      transition: all 0.3s ease;
+    }
+    
+    .table-container:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(249, 115, 22, 0.15);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: transparent;
+    }
+    
+    th, td {
+      padding: 1rem 0.8rem;
+      text-align: center;
+      font-size: 1rem;
+      border-bottom: 1px solid rgba(249, 115, 22, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    th {
+      background: linear-gradient(135deg, rgba(251, 146, 60, 0.1), rgba(249, 115, 22, 0.1));
+      color: #ea580c;
+      font-weight: 700;
+      font-size: 1.1rem;
+      position: sticky;
+      top: 0;
+      animation: slideInLeft 0.8s ease-out 0.9s both;
+    }
+    
+    tr {
+      transition: all 0.3s ease;
+      animation: slideInUp 0.6s ease-out;
+    }
+    
+    tr:nth-child(1) { animation-delay: 1s; }
+    tr:nth-child(2) { animation-delay: 1.1s; }
+    tr:nth-child(3) { animation-delay: 1.2s; }
+    tr:nth-child(4) { animation-delay: 1.3s; }
+    tr:nth-child(5) { animation-delay: 1.4s; }
+    
+    tr:last-child td {
+      border-bottom: none;
+    }
+    
+    tr:hover {
+      background: rgba(249, 115, 22, 0.05);
+      transform: scale(1.01);
+      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.1);
+    }
+    
+    td {
+      color: #4b5563;
+      font-weight: 500;
+    }
+    
+    td:hover {
+      color: #ea580c;
+      font-weight: 600;
+    }
+    
+    #invited-table th, #invited-table td {
+      font-size: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+      .dashboard-container {
+        padding: 2rem 1.5rem 2rem 1.5rem;
+        max-width: 95vw;
+        margin: 1rem;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .stat-value {
+        font-size: 2rem;
+      }
+      
+      .stats {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+      }
+      
+      .tabs {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .tab-btn {
+        min-width: auto;
+      }
+      
+      th, td {
+        font-size: 0.9rem;
+        padding: 0.8rem 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <h1>דשבורד אישורי הגעה - איה ועידו</h1>
+    
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-rsvp">אישורי הגעה</button>
+      <button class="tab-btn" id="tab-invited">רשימת מוזמנים</button>
+    </div>
+    
+    <div class="stats" id="stats-section">
+      <div class="stat-box">
+        <span class="stat-label">סה״כ מוזמנים</span>
+        <span class="stat-value" id="total-invited">—</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">אישרו הגעה (סה״כ משתתפים)</span>
+        <span class="stat-value" id="approved">—</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">טרם אישרו הגעה</span>
+        <span class="stat-value" id="not-approved">—</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">אחוז שטרם אישרו הגעה</span>
+        <span class="stat-value" id="not-approved-percent">—</span>
+      </div>
+    </div>
+    
+    <div class="table-container" id="rsvp-table-container">
+      <table id="rsvp-table">
+        <thead>
+          <tr>
+            <th>שם</th>
+            <th>טלפון</th>
+            <th>משתתפים</th>
+            <th>זמן רישום</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Data will be inserted here -->
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="table-container" id="invited-table-container" style="display:none;">
+      <table id="invited-table">
+        <thead>
+          <tr>
+            <th>שם</th>
+            <th>טלפון</th>
+            <th>מוזמנים צפויים</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Invited data will be inserted here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    // Replace with your SheetDB API endpoint
+    const SHEETDB_API = 'https://sheetdb.io/api/v1/pimc3ptqia34k';
+    // Add your invited guests SheetDB endpoint (should return [{name, phone, expected_guest}])
+    const INVITED_API = 'https://sheetdb.io/api/v1/a2omrjytm7xx3'; // <-- Replace with your invited guests endpoint
+    // Set your total invited here (or fetch from SheetDB if you store it there)
+    const TOTAL_INVITED = 233;
+
+    async function fetchRSVPs() {
+      const res = await fetch(SHEETDB_API);
+      if (!res.ok) return [];
+      return await res.json();
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return d.toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' });
+    }
+
+    async function renderTableWithNames(data) {
+      const tbody = document.querySelector('#rsvp-table tbody');
+      tbody.innerHTML = '';
+      
+      // Fetch invited guests list
+      let invitedGuests = [];
+      try {
+        const invitedRes = await fetch(INVITED_API);
+        if (invitedRes.ok) {
+          invitedGuests = await invitedRes.json();
+        }
+      } catch (error) {
+        console.error('Error fetching invited guests:', error);
+      }
+      
+      data.forEach(row => {
+        // Find matching guest by phone number
+        const invitedGuest = invitedGuests.find(g => g.phone === row.phone);
+        const guestName = invitedGuest ? invitedGuest.name : '';
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${guestName}</td>
+          <td>${row.phone || ''}</td>
+          <td>${row.guests || ''}</td>
+          <td>${formatDate(row.timestamp)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderStats(data) {
+      // Sum all guests
+      const approved = data.reduce((sum, row) => {
+        const guests = parseInt(row.guests, 10);
+        return sum + (isNaN(guests) ? 0 : guests);
+      }, 0);
+      const notApproved = Math.max(TOTAL_INVITED - approved, 0);
+      const percentNotApproved = TOTAL_INVITED > 0 ? ((notApproved / TOTAL_INVITED) * 100).toFixed(1) : '0.0';
+      document.getElementById('approved').textContent = approved;
+      document.getElementById('total-invited').textContent = TOTAL_INVITED;
+      document.getElementById('not-approved').textContent = notApproved;
+      document.getElementById('not-approved-percent').textContent = percentNotApproved + '%';
+    }
+
+    async function loadDashboard() {
+      const data = await fetchRSVPs();
+      await renderTableWithNames(data);
+      renderStats(data);
+    }
+
+    async function fetchInvited() {
+      const res = await fetch(INVITED_API);
+      if (!res.ok) return [];
+      return await res.json();
+    }
+
+    function renderInvitedTable(data) {
+      const tbody = document.querySelector('#invited-table tbody');
+      tbody.innerHTML = '';
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.name || ''}</td>
+          <td>${row.phone || ''}</td>
+          <td>${row.expected_guest || ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function loadInvitedTable() {
+      const data = await fetchInvited();
+      renderInvitedTable(data);
+    }
+
+    // Tab switching logic
+    document.getElementById('tab-rsvp').addEventListener('click', function() {
+      this.classList.add('active');
+      document.getElementById('tab-invited').classList.remove('active');
+      document.getElementById('rsvp-table-container').style.display = '';
+      document.getElementById('stats-section').style.display = '';
+      document.getElementById('invited-table-container').style.display = 'none';
+    });
+    document.getElementById('tab-invited').addEventListener('click', function() {
+      this.classList.add('active');
+      document.getElementById('tab-rsvp').classList.remove('active');
+      document.getElementById('rsvp-table-container').style.display = 'none';
+      document.getElementById('stats-section').style.display = 'none';
+      document.getElementById('invited-table-container').style.display = '';
+      loadInvitedTable();
+    });
+
+    loadDashboard();
+  </script>
+</body>
+</html>
