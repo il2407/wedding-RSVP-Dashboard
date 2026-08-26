@@ -6,7 +6,15 @@
   <title>אישור הגעה לחתונה</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
-    
+
+    /* Overridden per-tenant via JS from the couple's chosen theme color (see applyThemeColor) */
+    :root {
+      --primary: #f97316;
+      --primary-dark: #ea580c;
+      --primary-rgb: 249, 115, 22;
+      --primary-dark-rgb: 234, 88, 12;
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -15,7 +23,7 @@
     
     body {
       font-family: 'Heebo', Arial, sans-serif;
-      background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 25%, #fdba74 50%, #fb923c 75%, #f97316 100%);
+      background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 25%, #fdba74 50%, #fb923c 75%, var(--primary) 100%);
       margin: 0;
       padding: 0;
       min-height: 100vh;
@@ -35,7 +43,7 @@
       bottom: 0;
       background: 
         radial-gradient(circle at 20% 80%, rgba(251, 146, 60, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(var(--primary-rgb), 0.1) 0%, transparent 50%),
         radial-gradient(circle at 40% 40%, rgba(245, 101, 101, 0.1) 0%, transparent 50%);
       pointer-events: none;
       z-index: -1;
@@ -46,7 +54,7 @@
       backdrop-filter: blur(20px);
       border-radius: 32px;
       box-shadow: 
-        0 20px 60px rgba(249, 115, 22, 0.15),
+        0 20px 60px rgba(var(--primary-rgb), 0.15),
         0 8px 32px rgba(251, 146, 60, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
       padding: 3rem 2.5rem 2.5rem 2.5rem;
@@ -66,7 +74,7 @@
       left: 0;
       right: 0;
       height: 4px;
-      background: linear-gradient(90deg, #f97316, #ea580c, #dc2626, #f97316);
+      background: linear-gradient(90deg, var(--primary), var(--primary-dark), #dc2626, var(--primary));
       background-size: 400% 100%;
       animation: shimmer 3s ease-in-out infinite;
     }
@@ -123,7 +131,7 @@
       font-family: 'Playfair Display', serif;
       font-size: 2.5rem;
       font-weight: 700;
-      background: linear-gradient(135deg, #f97316, #ea580c, #dc2626);
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark), #dc2626);
       background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -141,7 +149,7 @@
       height: 100px;
       object-fit: contain;
       animation: tilt 1s ease-in-out infinite;
-      filter: drop-shadow(0 4px 8px rgba(249, 115, 22, 0.3));
+      filter: drop-shadow(0 4px 8px rgba(var(--primary-rgb), 0.3));
     }
     
     .wedding-subtitle {
@@ -154,22 +162,22 @@
     .wedding-date {
       display: inline-block;
       background: linear-gradient(135deg, #fed7aa, #fdba74);
-      color: #ea580c;
+      color: var(--primary-dark);
       padding: 0.5rem 1.5rem;
       border-radius: 50px;
       font-weight: 600;
       font-size: 1rem;
-      border: 1px solid rgba(234, 88, 12, 0.2);
+      border: 1px solid rgba(var(--primary-dark-rgb), 0.2);
       margin-bottom: -2rem;
-      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.2);
       animation: slideInUp 0.8s ease-out 0.2s both;
     }
     
     .wedding-date a {
-      color: #ea580c;
+      color: var(--primary-dark);
       text-decoration: none;
       font-weight: 600;
-      border-bottom: 1px solid rgba(234, 88, 12, 0.3);
+      border-bottom: 1px solid rgba(var(--primary-dark-rgb), 0.3);
       transition: all 0.3s ease;
       display: inline-block;
       margin-top: 0.3rem;
@@ -214,7 +222,7 @@
       background: rgba(255, 255, 255, 0.7);
       border-radius: 20px;
       padding: 2rem;
-      border: 1px solid rgba(249, 115, 22, 0.1);
+      border: 1px solid rgba(var(--primary-rgb), 0.1);
       backdrop-filter: blur(10px);
       animation: slideInUp 0.8s ease-out 1.4s both;
       transition: all 0.3s ease;
@@ -222,14 +230,14 @@
     
     .form-container:hover {
       transform: translateY(-5px);
-      box-shadow: 0 15px 35px rgba(249, 115, 22, 0.15);
+      box-shadow: 0 15px 35px rgba(var(--primary-rgb), 0.15);
     }
     
     label {
       display: block;
       margin-bottom: 0.8rem;
       font-weight: 600;
-      color: #ea580c;
+      color: var(--primary-dark);
       font-size: 1.1rem;
       text-align: right;
       animation: slideInUp 0.8s ease-out 1.6s both;
@@ -239,7 +247,7 @@
       width: 100%;
       padding: 1rem 1.2rem;
       margin-bottom: 2rem;
-      border: 2px solid rgba(249, 115, 22, 0.2);
+      border: 2px solid rgba(var(--primary-rgb), 0.2);
       border-radius: 16px;
       font-size: 1.1rem;
       background: rgba(255, 255, 255, 0.9);
@@ -251,9 +259,9 @@
     
     input[type="number"]:focus {
       outline: none;
-      border-color: #f97316;
+      border-color: var(--primary);
       background: #fff;
-      box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+      box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
       transform: translateY(-2px) scale(1.02);
     }
     
@@ -261,7 +269,7 @@
       width: 100%;
       padding: 1rem 1.2rem;
       margin-bottom: 2rem;
-      border: 2px solid rgba(249, 115, 22, 0.2);
+      border: 2px solid rgba(var(--primary-rgb), 0.2);
       border-radius: 16px;
       font-size: 1.1rem;
       background: rgba(255, 255, 255, 0.9);
@@ -274,9 +282,9 @@
     
     select:focus {
       outline: none;
-      border-color: #f97316;
+      border-color: var(--primary);
       background: #fff;
-      box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+      box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
       transform: translateY(-2px) scale(1.02);
     }
     
@@ -290,7 +298,7 @@
     button {
       width: 100%;
       padding: 1.2rem 0;
-      background: linear-gradient(135deg, #f97316, #ea580c);
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: #fff;
       font-size: 1.3rem;
       font-weight: 700;
@@ -298,7 +306,7 @@
       border-radius: 16px;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 8px 24px rgba(249, 115, 22, 0.3);
+      box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.3);
       position: relative;
       overflow: hidden;
       letter-spacing: 0.5px;
@@ -322,7 +330,7 @@
     
     button:hover {
       transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 12px 32px rgba(249, 115, 22, 0.4);
+      box-shadow: 0 12px 32px rgba(var(--primary-rgb), 0.4);
     }
     
     button:active {
@@ -408,7 +416,7 @@
       left: 0;
       right: 0;
       height: 4px;
-      background: linear-gradient(90deg, #f97316, #ea580c, #dc2626, #f97316);
+      background: linear-gradient(90deg, var(--primary), var(--primary-dark), #dc2626, var(--primary));
       background-size: 400% 100%;
       animation: shimmer 2s ease-in-out infinite;
     }
@@ -461,9 +469,9 @@
     }
     
     .modal-btn.update {
-      background: linear-gradient(135deg, #f97316, #ea580c);
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: #fff;
-      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
     }
     
     .modal-btn.cancel {
@@ -536,7 +544,7 @@
       right: -18px;
       width: 36px;
       height: 36px;
-      background: linear-gradient(135deg, #f97316, #ea580c);
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: #fff;
       border: none;
       border-radius: 50%;
@@ -546,7 +554,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4);
       z-index: 2;
       transition: all 0.3s ease;
       animation: float 2s ease-in-out infinite;
@@ -554,7 +562,7 @@
     
     .photo-close-btn:hover {
       transform: scale(1.1) rotate(90deg);
-      box-shadow: 0 6px 16px rgba(249, 115, 22, 0.5);
+      box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.5);
     }
     
     @keyframes fadeIn {
@@ -625,7 +633,7 @@
     <div class="form-container">
       <form id="rsvp-form" autocomplete="off">
         <label for="guests">כמה תהיו? (כולל אותך)</label>
-        <select id="guests" name="guests" required style="width: 100%; padding: 1rem 1.2rem; margin-bottom: 2rem; border: 2px solid rgba(249, 115, 22, 0.2); border-radius: 16px; font-size: 1.1rem; background: rgba(255, 255, 255, 0.9); transition: all 0.3s ease; direction: rtl; font-weight: 500; animation: slideInUp 0.8s ease-out 1.2s both;">
+        <select id="guests" name="guests" required style="width: 100%; padding: 1rem 1.2rem; margin-bottom: 2rem; border: 2px solid rgba(var(--primary-rgb), 0.2); border-radius: 16px; font-size: 1.1rem; background: rgba(255, 255, 255, 0.9); transition: all 0.3s ease; direction: rtl; font-weight: 500; animation: slideInUp 0.8s ease-out 1.2s both;">
           <option value="1">1</option>
           <option value="2">2</option>
           <option value="3">3</option>
@@ -673,7 +681,7 @@
           </button>
         </div>
         <div id="global-loader" class="global-loader" style="display:none; align-items:center; justify-content:center; gap:10px; margin-top: 1rem;">
-          <svg width="28" height="28" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="#ea580c">
+          <svg width="28" height="28" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="var(--primary-dark)">
             <g fill="none" fill-rule="evenodd">
               <g transform="translate(1 1)" stroke-width="3">
                 <circle stroke-opacity=".2" cx="18" cy="18" r="18"/>
@@ -740,6 +748,9 @@
     // Every guest link carries the tenant (account) id so this static page knows whose
     // wedding data to read: /rsvp-form/?u=<tenantId>&phone=<phone>
     const TENANT_ID = getUrlParameter('u');
+    // Lets an admin open their own RSVP form (e.g. from a "Preview" button in /admin/)
+    // without a real guest phone number; submitting never touches the server.
+    const PREVIEW_MODE = getUrlParameter('preview') === '1';
     const GROOM_PHOTO = `/media/${TENANT_ID}/groom_photo`;
     const BRIDE_PHOTO = `/media/${TENANT_ID}/bride_photo`;
     const APPROVAL_GIF = `/media/${TENANT_ID}/approval_gif`;
@@ -788,12 +799,32 @@
     }
 
     // Function to load event config and populate the page
+    // Recolors the page to the tenant's chosen theme color, derived from a single hex
+    // value stored in settings (the darker "-dark" shade used for gradients/hover states
+    // is computed on the fly rather than stored separately).
+    function applyThemeColor(hex) {
+      if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+      const toRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+      const toHex = (rgb) => '#' + rgb.map((c) => Math.max(0, Math.min(255, c)).toString(16).padStart(2, '0')).join('');
+
+      const rgb = toRgb(hex);
+      const darkRgb = rgb.map((c) => Math.round(c * 0.85));
+      const darkHex = toHex(darkRgb);
+
+      const root = document.documentElement.style;
+      root.setProperty('--primary', hex);
+      root.setProperty('--primary-dark', darkHex);
+      root.setProperty('--primary-rgb', rgb.join(', '));
+      root.setProperty('--primary-dark-rgb', darkRgb.join(', '));
+    }
+
     async function loadConfig() {
       try {
         const response = await fetch(`/api/public/${TENANT_ID}/config`);
         if (!response.ok) return;
         const config = await response.json();
 
+        applyThemeColor(config.theme_color);
         document.title = `${config.couple_name_1} ${config.couple_name_2} - אישור הגעה לחתונה`;
         document.getElementById('couple-names').textContent = `${config.couple_name_1} ${config.couple_name_2}`;
         document.getElementById('wedding-date-text').textContent = config.wedding_date;
@@ -823,6 +854,12 @@
         confirmation.style.color = '#ef4444';
         confirmation.textContent = 'קישור לא תקין';
         submitBtn.disabled = true;
+        return;
+      }
+
+      if (PREVIEW_MODE) {
+        personalizedGreeting.textContent = 'תצוגה מקדימה 👀';
+        personalizedGreeting.style.display = 'block';
         return;
       }
 
@@ -881,6 +918,13 @@
       confirmation.textContent = '';
       const phone = getUrlParameter('phone');
       const guests = form.guests.value.trim();
+
+      if (PREVIEW_MODE) {
+        confirmation.style.color = '#10b981';
+        confirmation.textContent = 'תצוגה מקדימה - לא נשמר בפועל';
+        showGifPopup(parseInt(guests, 10) >= 1 ? APPROVAL_GIF : DECLINE_GIF);
+        return;
+      }
 
       if (!phone) {
         confirmation.style.color = '#ef4444';
@@ -986,7 +1030,14 @@
       e.preventDefault();
       confirmation.textContent = '';
       const phone = getUrlParameter('phone');
-      
+
+      if (PREVIEW_MODE) {
+        confirmation.style.color = '#10b981';
+        confirmation.textContent = 'תצוגה מקדימה - לא נשמר בפועל';
+        showGifPopup(DECLINE_GIF);
+        return;
+      }
+
       if (!phone) {
         confirmation.style.color = '#ef4444';
         confirmation.textContent = 'מספר טלפון לא נמצא בכתובת האתר';
@@ -1079,7 +1130,7 @@
       
       // Show popup modal with enhanced styling
       modalMessage.innerHTML = `
-        <div style="font-size: 1.4rem; font-weight: 600; color: #ea580c; margin-bottom: 0.5rem;">
+        <div style="font-size: 1.4rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 0.5rem;">
           תודה שהודעת!
         </div>
         <div style="font-size: 1rem; color: #6b7280; font-weight: 400;">

@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS settings (
   deployed_base_url TEXT NOT NULL DEFAULT '',
   whatsapp_message_template TEXT NOT NULL DEFAULT '',
   whatsapp_country_code TEXT NOT NULL DEFAULT '',
+  theme_color TEXT NOT NULL DEFAULT '#f97316',
   updated_at TEXT NOT NULL
 );
 

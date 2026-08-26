@@ -17,6 +17,7 @@ const SETTINGS_FIELDS = [
   'bus_return_time',
   'whatsapp_message_template',
   'whatsapp_country_code',
+  'theme_color',
 ];
 
 function loadConfig(userId) {
@@ -37,6 +38,10 @@ router.get('/admin/config', requireAuth, (req, res) => {
 });
 
 router.put('/admin/config', requireAuth, (req, res) => {
+  if (req.body.theme_color !== undefined && !/^#[0-9a-fA-F]{6}$/.test(req.body.theme_color)) {
+    return res.status(400).json({ error: 'theme_color must be a hex color like #f97316' });
+  }
+
   const updates = {};
   for (const field of SETTINGS_FIELDS) {
     if (req.body[field] !== undefined) {

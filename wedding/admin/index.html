@@ -69,6 +69,16 @@
       min-height: 90px;
     }
 
+    input[type="color"] {
+      width: 90px;
+      height: 42px;
+      padding: 0.2rem;
+      border: 2px solid rgba(249, 115, 22, 0.2);
+      border-radius: 10px;
+      cursor: pointer;
+      background: #fff;
+    }
+
     button {
       background: linear-gradient(135deg, #f97316, #ea580c);
       color: #fff;
@@ -86,6 +96,26 @@
       background: #e5e7eb;
       color: #374151;
     }
+
+    .button-link {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      border-radius: 10px;
+      padding: 0.7rem 1.4rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-top: 1rem;
+    }
+
+    .button-link.secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .button-link:hover { opacity: 0.9; }
 
     button.danger {
       background: #ef4444;
@@ -272,6 +302,17 @@
     </div>
 
     <div class="card">
+      <h2>תצוגה מקדימה</h2>
+      <p style="font-size:0.85rem; color:#6b7280; margin-top:-0.6rem;">
+        כך המוזמנים יראו את הטפסים - נפתח בלשונית חדשה, בלי לשמור נתונים אמיתיים
+      </p>
+      <div class="two-col">
+        <a id="preview-rsvp-link" class="button-link secondary" href="#" target="_blank" rel="noopener">תצוגה מקדימה - טופס אישור הגעה</a>
+        <a id="preview-bus-link" class="button-link secondary" href="#" target="_blank" rel="noopener">תצוגה מקדימה - טופס הסעה</a>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>פרטי האירוע</h2>
       <form id="config-form">
         <div class="two-col">
@@ -319,6 +360,9 @@
             <input type="text" id="bus_return_time" name="bus_return_time">
           </div>
         </div>
+
+        <label for="theme_color">צבע ערכת נושא לעמודי המוזמנים (אישור הגעה / הסעה)</label>
+        <input type="color" id="theme_color" name="theme_color">
 
         <label for="whatsapp_country_code">קידומת מדינה לוואטסאפ</label>
         <input type="text" id="whatsapp_country_code" name="whatsapp_country_code" placeholder="972">
@@ -392,7 +436,7 @@
     const CONFIG_FIELDS = [
       'couple_name_1', 'couple_name_2', 'wedding_date', 'wedding_time', 'venue_name', 'waze_link',
       'bus_pickup_location', 'bus_destination_text', 'bus_departure_time', 'bus_return_time',
-      'whatsapp_message_template', 'whatsapp_country_code',
+      'theme_color', 'whatsapp_message_template', 'whatsapp_country_code',
     ];
 
     const MEDIA_SLOTS = [
@@ -416,6 +460,14 @@
       {
         label: 'חגיגית',
         text: '💍🎊 מתחתנים! ואתם ממש חייבים להיות שם!\nלאישור הגעה מהיר לחצו כאן: {link} 🥂',
+      },
+      {
+        label: 'בוראט 🇰🇿',
+        text: 'ג׳אגשמאש! 🎉 מתחתנים, וזה יהיה Great Success אם תגיעו! Very Nice יהיה לראות אתכם שם.\nלאישור הגעה, לחצו כאן: {link}\nתודה רבה, היי פייב! 🖐️',
+      },
+      {
+        label: 'דובי מהארי פוטר 🧦',
+        text: 'דובי שמח לבשר: מתחתנים! 🎉 דובי יהיה הכי מאושר בעולם אם תבואו לחגוג.\nדובי מבקש בענווה רבה שתאשרו הגעה כאן: {link}\nדובי אסיר תודה על הכבוד הגדול הזה! ✨',
       },
     ];
 
@@ -639,6 +691,8 @@
 
     (async function init() {
       await loadCurrentUser();
+      document.getElementById('preview-rsvp-link').href = `/rsvp-form/?u=${currentUserId}&preview=1`;
+      document.getElementById('preview-bus-link').href = `/bus-approval/?u=${currentUserId}&preview=1`;
       populateTemplatePresets();
       loadConfigForm();
       loadMediaSlots();

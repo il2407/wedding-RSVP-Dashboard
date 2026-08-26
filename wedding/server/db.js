@@ -51,6 +51,14 @@ function migrateGoogleAuthColumn() {
 
 migrateGoogleAuthColumn();
 
+// One-time upgrade for accounts created before per-tenant theming existed.
+function migrateThemeColorColumn() {
+  if (!tableExists('settings') || columnExists('settings', 'theme_color')) return;
+  db.exec("ALTER TABLE settings ADD COLUMN theme_color TEXT NOT NULL DEFAULT '#f97316'");
+}
+
+migrateThemeColorColumn();
+
 const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 db.exec(schema);
 
