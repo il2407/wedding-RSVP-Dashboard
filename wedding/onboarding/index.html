@@ -106,6 +106,14 @@
     .media-slot-name { font-weight: 600; min-width: 130px; font-size: 0.9rem; }
     .media-slot input[type="file"] { flex: 1; font-size: 0.85rem; }
 
+    .media-preview {
+      width: 42px;
+      height: 42px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
     button {
       background: linear-gradient(135deg, #f97316, #ea580c);
       color: #fff;
@@ -215,18 +223,22 @@
 
         <div class="media-slot">
           <span class="media-slot-name">תמונת חתן</span>
+          <img class="media-preview" id="preview-groom_photo" style="display:none;">
           <input type="file" accept="image/*" data-slot="groom_photo">
         </div>
         <div class="media-slot">
           <span class="media-slot-name">תמונת כלה</span>
+          <img class="media-preview" id="preview-bride_photo" style="display:none;">
           <input type="file" accept="image/*" data-slot="bride_photo">
         </div>
         <div class="media-slot">
           <span class="media-slot-name">גיף אישור הגעה</span>
+          <img class="media-preview" id="preview-approval_gif" style="display:none;">
           <input type="file" accept="image/gif,image/*" data-slot="approval_gif">
         </div>
         <div class="media-slot">
           <span class="media-slot-name">גיף אי הגעה</span>
+          <img class="media-preview" id="preview-decline_gif" style="display:none;">
           <input type="file" accept="image/gif,image/*" data-slot="decline_gif">
         </div>
 
@@ -279,6 +291,20 @@
       el.textContent = message;
       el.className = `status-msg ${isSuccess ? 'success' : 'error'}`;
     }
+
+    // Show a live thumbnail of the picked file before it's uploaded, so it's obvious
+    // what's about to be saved.
+    document.querySelectorAll('#step-1 input[type="file"]').forEach((input) => {
+      input.addEventListener('change', () => {
+        const preview = document.getElementById(`preview-${input.dataset.slot}`);
+        if (!input.files[0]) {
+          preview.style.display = 'none';
+          return;
+        }
+        preview.src = URL.createObjectURL(input.files[0]);
+        preview.style.display = 'inline-block';
+      });
+    });
 
     document.getElementById('couple-form').addEventListener('submit', async (e) => {
       e.preventDefault();

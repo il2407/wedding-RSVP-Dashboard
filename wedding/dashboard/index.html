@@ -411,6 +411,16 @@
       color: #6b7280;
       background: none;
     }
+
+    .status-yes { color: #10b981; font-weight: 700; }
+    .status-no { color: #ef4444; font-weight: 700; }
+    .status-pending { color: #9ca3af; font-weight: 600; }
+
+    .loading-row, .empty-row {
+      color: #9ca3af;
+      font-style: italic;
+      padding: 1.8rem !important;
+    }
   </style>
 </head>
 <body>
@@ -426,6 +436,7 @@
     <div class="tabs">
       <button class="tab-btn active" id="tab-rsvp">אישורי הגעה</button>
       <button class="tab-btn" id="tab-invited">רשימת מוזמנים</button>
+      <button class="tab-btn" id="tab-bus">הסעות</button>
     </div>
     
     <div class="stats" id="stats-section">
@@ -472,10 +483,29 @@
             <th>שם</th>
             <th>טלפון</th>
             <th>מוזמנים צפויים</th>
+            <th>סטטוס</th>
           </tr>
         </thead>
         <tbody>
           <!-- Invited data will be inserted here -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-container" id="bus-table-container" style="display:none;">
+      <input type="text" id="bus-search" class="search-input" placeholder="חיפוש לפי שם או טלפון...">
+      <table id="bus-table">
+        <thead>
+          <tr>
+            <th>שם מלא</th>
+            <th>טלפון</th>
+            <th>הלוך</th>
+            <th>חזור</th>
+            <th>עודכן</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Bus registration data will be inserted here -->
         </tbody>
       </table>
     </div>
@@ -518,17 +548,39 @@
 
     let rsvpRows = [];
     let invitedRows = [];
+    let busRows = [];
+    let rsvpByPhone = {};
 
     function filterBySearch(rows, query) {
       const q = query.trim().toLowerCase();
       if (!q) return rows;
-      return rows.filter(row =>
-        (row.name || '').toLowerCase().includes(q) || (row.phone || '').toLowerCase().includes(q)
-      );
+      return rows.filter(row => {
+        const name = (row.name || row.full_name || '').toLowerCase();
+        const phone = (row.phone || '').toLowerCase();
+        return name.includes(q) || phone.includes(q);
+      });
+    }
+
+    function showLoadingRow(tbodySelector, colSpan) {
+      document.querySelector(tbodySelector).innerHTML =
+        `<tr><td colspan="${colSpan}" class="loading-row">טוען...</td></tr>`;
+    }
+
+    function statusBadge(phone) {
+      const rsvp = rsvpByPhone[phone];
+      if (!rsvp) return '<span class="status-pending">טרם ענה</span>';
+      const guests = parseInt(rsvp.guests, 10) || 0;
+      return guests > 0
+        ? `<span class="status-yes">מגיע (${guests})</span>`
+        : '<span class="status-no">לא מגיע</span>';
     }
 
     function renderRsvpRows(rows) {
       const tbody = document.querySelector('#rsvp-table tbody');
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-row">אין אישורי הגעה להצגה</td></tr>';
+        return;
+      }
       tbody.innerHTML = '';
       rows.forEach(row => {
         const tr = document.createElement('tr');
@@ -560,6 +612,9 @@
         return { ...row, name: invitedGuest ? invitedGuest.name : '' };
       });
 
+      rsvpByPhone = {};
+      data.forEach(row => { rsvpByPhone[row.phone] = row; });
+
       renderRsvpRows(filterBySearch(rsvpRows, document.getElementById('rsvp-search').value));
     }
 
@@ -578,6 +633,7 @@
     }
 
     async function loadDashboard() {
+      showLoadingRow('#rsvp-table tbody', 4);
       const data = await fetchRSVPs();
       await renderTableWithNames(data);
       renderStats(data);
@@ -591,6 +647,10 @@
 
     function renderInvitedTable(rows) {
       const tbody = document.querySelector('#invited-table tbody');
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-row">אין מוזמנים להצגה</td></tr>';
+        return;
+      }
       tbody.innerHTML = '';
       rows.forEach(row => {
         const tr = document.createElement('tr');
@@ -598,32 +658,73 @@
           <td>${row.name || ''}</td>
           <td>${row.phone || ''}</td>
           <td>${row.expected_guest || ''}</td>
+          <td>${statusBadge(row.phone)}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
     async function loadInvitedTable() {
+      showLoadingRow('#invited-table tbody', 4);
       invitedRows = await fetchInvited();
+      if (Object.keys(rsvpByPhone).length === 0) {
+        const rsvps = await fetchRSVPs();
+        rsvps.forEach(r => { rsvpByPhone[r.phone] = r; });
+      }
       renderInvitedTable(filterBySearch(invitedRows, document.getElementById('invited-search').value));
     }
 
+    async function fetchBusRegistrations() {
+      const res = await apiFetch('/api/bus-registrations');
+      if (!res.ok) return [];
+      return await res.json();
+    }
+
+    function renderBusRows(rows) {
+      const tbody = document.querySelector('#bus-table tbody');
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-row">אין רישומים להסעה</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '';
+      rows.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.full_name || ''}</td>
+          <td>${row.phone || ''}</td>
+          <td>${row.going_count || 0}${row.going_confirmed ? ' ✓' : ''}</td>
+          <td>${row.return_count || 0}${row.return_confirmed ? ' ✓' : ''}</td>
+          <td>${formatDate(row.updated_at)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function loadBusTable() {
+      showLoadingRow('#bus-table tbody', 5);
+      busRows = await fetchBusRegistrations();
+      renderBusRows(filterBySearch(busRows, document.getElementById('bus-search').value));
+    }
+
     // Tab switching logic
-    document.getElementById('tab-rsvp').addEventListener('click', function() {
-      this.classList.add('active');
-      document.getElementById('tab-invited').classList.remove('active');
-      document.getElementById('rsvp-table-container').style.display = '';
-      document.getElementById('stats-section').style.display = '';
-      document.getElementById('invited-table-container').style.display = 'none';
-    });
-    document.getElementById('tab-invited').addEventListener('click', function() {
-      this.classList.add('active');
-      document.getElementById('tab-rsvp').classList.remove('active');
-      document.getElementById('rsvp-table-container').style.display = 'none';
-      document.getElementById('stats-section').style.display = 'none';
-      document.getElementById('invited-table-container').style.display = '';
-      loadInvitedTable();
-    });
+    const TABS = {
+      rsvp: { btn: 'tab-rsvp', container: 'rsvp-table-container', showStats: true },
+      invited: { btn: 'tab-invited', container: 'invited-table-container', showStats: false, onShow: loadInvitedTable },
+      bus: { btn: 'tab-bus', container: 'bus-table-container', showStats: false, onShow: loadBusTable },
+    };
+
+    function switchTab(tabKey) {
+      Object.entries(TABS).forEach(([key, cfg]) => {
+        document.getElementById(cfg.btn).classList.toggle('active', key === tabKey);
+        document.getElementById(cfg.container).style.display = key === tabKey ? '' : 'none';
+      });
+      document.getElementById('stats-section').style.display = TABS[tabKey].showStats ? '' : 'none';
+      if (TABS[tabKey].onShow) TABS[tabKey].onShow();
+    }
+
+    document.getElementById('tab-rsvp').addEventListener('click', () => switchTab('rsvp'));
+    document.getElementById('tab-invited').addEventListener('click', () => switchTab('invited'));
+    document.getElementById('tab-bus').addEventListener('click', () => switchTab('bus'));
 
     document.getElementById('logout-link').addEventListener('click', async (e) => {
       e.preventDefault();
@@ -637,6 +738,10 @@
 
     document.getElementById('invited-search').addEventListener('input', (e) => {
       renderInvitedTable(filterBySearch(invitedRows, e.target.value));
+    });
+
+    document.getElementById('bus-search').addEventListener('input', (e) => {
+      renderBusRows(filterBySearch(busRows, e.target.value));
     });
 
     (async function init() {

@@ -122,6 +122,26 @@
       flex: 1;
     }
 
+    .media-slot-preview {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    .media-thumb {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    td .copy-link-btn {
+      background: #e5e7eb;
+      color: #374151;
+      margin-inline-end: 0.4rem;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -359,6 +379,16 @@
   </div>
 
   <script>
+    let currentUserId = null;
+
+    async function loadCurrentUser() {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const user = await res.json();
+        currentUserId = user.id;
+      }
+    }
+
     const CONFIG_FIELDS = [
       'couple_name_1', 'couple_name_2', 'wedding_date', 'wedding_time', 'venue_name', 'waze_link',
       'bus_pickup_location', 'bus_destination_text', 'bus_departure_time', 'bus_return_time',
@@ -465,10 +495,12 @@
       MEDIA_SLOTS.forEach(({ slot, label }) => {
         const row = document.createElement('div');
         row.className = 'media-slot';
-        const current = bySlot[slot] ? bySlot[slot].filename : 'לא הועלה עדיין';
+        const preview = bySlot[slot]
+          ? `<img src="/media/${currentUserId}/${slot}?t=${Date.now()}" class="media-thumb" alt="${label}">`
+          : '<span class="media-slot-current">לא הועלה עדיין</span>';
         row.innerHTML = `
           <span class="media-slot-name">${label}</span>
-          <span class="media-slot-current">${current}</span>
+          <span class="media-slot-preview">${preview}</span>
           <input type="file" data-slot="${slot}" style="width:auto;">
         `;
         container.appendChild(row);
@@ -501,12 +533,29 @@
           <td>${guest.name}</td>
           <td>${guest.phone}</td>
           <td>${guest.expected_guest}</td>
-          <td><button type="button" class="danger" data-phone="${guest.phone}">מחיקה</button></td>
+          <td>
+            <button type="button" class="secondary copy-link-btn" data-phone="${guest.phone}">העתקת קישור</button>
+            <button type="button" class="danger" data-phone="${guest.phone}">מחיקה</button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
 
-      tbody.querySelectorAll('button[data-phone]').forEach((btn) => {
+      tbody.querySelectorAll('button.copy-link-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const link = `${window.location.origin}/rsvp-form/?u=${currentUserId}&phone=${encodeURIComponent(btn.dataset.phone)}`;
+          const originalText = btn.textContent;
+          try {
+            await navigator.clipboard.writeText(link);
+            btn.textContent = 'הועתק!';
+          } catch (err) {
+            alert(`לא ניתן להעתיק אוטומטית. הקישור:\n${link}`);
+          }
+          setTimeout(() => { btn.textContent = originalText; }, 1500);
+        });
+      });
+
+      tbody.querySelectorAll('button.danger[data-phone]').forEach((btn) => {
         btn.addEventListener('click', async () => {
           if (!confirm('למחוק מוזמן זה?')) return;
           await fetch(`/api/invited-guests/${encodeURIComponent(btn.dataset.phone)}`, { method: 'DELETE' });
@@ -588,10 +637,13 @@
       }
     });
 
-    populateTemplatePresets();
-    loadConfigForm();
-    loadMediaSlots();
-    loadGuests();
+    (async function init() {
+      await loadCurrentUser();
+      populateTemplatePresets();
+      loadConfigForm();
+      loadMediaSlots();
+      loadGuests();
+    })();
   </script>
 </body>
 </html>

@@ -225,6 +225,10 @@
             <label for="phone-numbers">Phone Numbers (one per line):</label>
             <textarea id="phone-numbers" class="phone-list" placeholder="0541234567&#10;0547654321&#10;0509876543"></textarea>
             <button type="button" class="secondary-btn" id="load-invited-btn">Load all invited guests</button>
+            <label style="display:inline-flex; align-items:center; gap:0.4rem; font-weight:400; margin-inline-start:1rem;">
+                <input type="checkbox" id="unresponded-only-checkbox">
+                רק מוזמנים שטרם ענו
+            </label>
         </div>
 
         <button class="send-btn" onclick="previewMessages()">Preview Messages</button>
@@ -318,9 +322,17 @@
                     showStatus('Could not load the invited guest list.', 'error');
                     return;
                 }
-                const guests = await res.json();
+                let guests = await res.json();
+
+                if (document.getElementById('unresponded-only-checkbox').checked) {
+                    const rsvpRes = await fetch('/api/rsvps');
+                    const rsvps = rsvpRes.ok ? await rsvpRes.json() : [];
+                    const respondedPhones = new Set(rsvps.map(r => r.phone));
+                    guests = guests.filter(g => !respondedPhones.has(g.phone));
+                }
+
                 if (guests.length === 0) {
-                    showStatus('Your invited guest list is empty.', 'error');
+                    showStatus('No matching guests found in your invited guest list.', 'error');
                     return;
                 }
                 document.getElementById('phone-numbers').value = guests.map(g => g.phone).join('\n');
