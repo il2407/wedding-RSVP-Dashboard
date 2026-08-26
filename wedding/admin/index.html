@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ניהול האירוע</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: linear-gradient(135deg, #fff7ed, #fed7aa);
+      margin: 0;
+      padding: 2rem 1rem;
+      color: #1f2937;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      color: #ea580c;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(249, 115, 22, 0.15);
+      padding: 1.8rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 {
+      color: #ea580c;
+      font-size: 1.2rem;
+      margin-top: 0;
+      margin-bottom: 1.2rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 500;
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+      margin-top: 0.9rem;
+      color: #4b5563;
+    }
+
+    input[type="text"], textarea, input[type="file"], select {
+      width: 100%;
+      padding: 0.6rem 0.9rem;
+      border: 2px solid rgba(249, 115, 22, 0.2);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: #fff;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    button {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 0.7rem 1.4rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    button.danger {
+      background: #ef4444;
+    }
+
+    .status-msg {
+      margin-top: 0.8rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .status-msg.success { color: #10b981; }
+    .status-msg.error { color: #ef4444; }
+
+    .media-slot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .media-slot:last-child { border-bottom: none; }
+
+    .media-slot-name {
+      font-weight: 600;
+      min-width: 130px;
+    }
+
+    .media-slot-current {
+      font-size: 0.8rem;
+      color: #6b7280;
+      flex: 1;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      text-align: right;
+      padding: 0.5rem;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+
+    th {
+      color: #ea580c;
+    }
+
+    td button {
+      margin-top: 0;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.8rem;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 1rem;
+    }
+
+    @media (max-width: 480px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .top-bar h1 { margin: 0; }
+
+    .logout-link {
+      font-size: 0.85rem;
+      color: #6b7280;
+      text-decoration: none;
+      background: rgba(255,255,255,0.7);
+      padding: 0.4rem 0.9rem;
+      border-radius: 8px;
+    }
+
+    .logout-link:hover { text-decoration: underline; }
+
+    .admin-nav {
+      display: flex;
+      gap: 0.6rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.2rem;
+    }
+
+    .admin-nav-link {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #ea580c;
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 0.5rem 1.1rem;
+      border-radius: 10px;
+    }
+
+    .admin-nav-link:hover { background: #fff; }
+
+    .admin-nav-link.active {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+    }
+
+    .admin-nav-link.admin-nav-logout {
+      margin-inline-start: auto;
+      color: #6b7280;
+      background: none;
+    }
+
+    hr.divider {
+      border: none;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      margin: 1.2rem 0;
+    }
+
+    .file-format-hint {
+      font-size: 0.82rem;
+      color: #6b7280;
+      margin: 0.4rem 0 0.6rem 0;
+      line-height: 1.6;
+    }
+
+    .file-format-hint code {
+      background: rgba(249, 115, 22, 0.1);
+      color: #ea580c;
+      padding: 0.1rem 0.35rem;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      direction: ltr;
+      display: inline-block;
+    }
+
+    .file-format-hint a {
+      display: block;
+      margin-top: 0.3rem;
+      color: #ea580c;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .file-format-hint a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="admin-nav">
+      <a href="/dashboard/" class="admin-nav-link">דשבורד</a>
+      <a href="/admin/" class="admin-nav-link active">ניהול</a>
+      <a href="/bulk-messaging/" class="admin-nav-link">שליחה המונית</a>
+      <a href="#" class="admin-nav-link admin-nav-logout" id="logout-link">יציאה</a>
+    </nav>
+    <div class="top-bar">
+      <h1>ניהול האירוע</h1>
+    </div>
+
+    <div class="card">
+      <h2>פרטי האירוע</h2>
+      <form id="config-form">
+        <div class="two-col">
+          <div>
+            <label for="couple_name_1">שם ראשון בזוג</label>
+            <input type="text" id="couple_name_1" name="couple_name_1">
+          </div>
+          <div>
+            <label for="couple_name_2">שם שני בזוג</label>
+            <input type="text" id="couple_name_2" name="couple_name_2">
+          </div>
+        </div>
+        <div class="two-col">
+          <div>
+            <label for="wedding_date">תאריך האירוע</label>
+            <input type="text" id="wedding_date" name="wedding_date" placeholder="לדוגמה: 7.11.2026">
+          </div>
+          <div>
+            <label for="wedding_time">שעת האירוע</label>
+            <input type="text" id="wedding_time" name="wedding_time" placeholder="לדוגמה: 19:00">
+          </div>
+        </div>
+        <label for="venue_name">מקום האירוע</label>
+        <input type="text" id="venue_name" name="venue_name">
+        <label for="waze_link">קישור וויז</label>
+        <input type="text" id="waze_link" name="waze_link" dir="ltr" placeholder="https://waze.com/ul/...">
+
+        <div class="two-col">
+          <div>
+            <label for="bus_pickup_location">נקודת איסוף להסעה</label>
+            <input type="text" id="bus_pickup_location" name="bus_pickup_location">
+          </div>
+          <div>
+            <label for="bus_destination_text">יעד ההסעה</label>
+            <input type="text" id="bus_destination_text" name="bus_destination_text">
+          </div>
+        </div>
+        <div class="two-col">
+          <div>
+            <label for="bus_departure_time">שעת יציאה</label>
+            <input type="text" id="bus_departure_time" name="bus_departure_time">
+          </div>
+          <div>
+            <label for="bus_return_time">שעת חזרה</label>
+            <input type="text" id="bus_return_time" name="bus_return_time">
+          </div>
+        </div>
+
+        <label for="whatsapp_country_code">קידומת מדינה לוואטסאפ</label>
+        <input type="text" id="whatsapp_country_code" name="whatsapp_country_code" placeholder="972">
+        <label for="template-preset-select">בחירת תבנית לדוגמה</label>
+        <select id="template-preset-select">
+          <option value="" selected disabled>בחרו תבנית או כתבו טקסט מותאם אישית למטה</option>
+        </select>
+        <label for="whatsapp_message_template">תבנית הודעת וואטסאפ (חובה לכלול {link})</label>
+        <textarea id="whatsapp_message_template" name="whatsapp_message_template" placeholder="השתמשו ב-{link} כדי להכניס את הקישור האישי"></textarea>
+
+        <button type="submit">שמירת פרטי האירוע</button>
+        <span id="config-status" class="status-msg"></span>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>תמונות וסרטונים</h2>
+      <div id="media-slots"></div>
+    </div>
+
+    <div class="card">
+      <h2>רשימת מוזמנים</h2>
+      <table id="guests-table">
+        <thead>
+          <tr><th>שם</th><th>טלפון</th><th>צפויים</th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <hr class="divider">
+
+      <label for="single-name">הוספת מוזמן בודד</label>
+      <div class="two-col">
+        <input type="text" id="single-name" placeholder="שם">
+        <input type="text" id="single-phone" placeholder="טלפון" dir="ltr">
+      </div>
+      <button type="button" id="add-single-btn" class="secondary">הוספה</button>
+      <span id="single-add-status" class="status-msg"></span>
+
+      <hr class="divider">
+
+      <label for="bulk-import-text">ייבוא מרובה (שורה לכל מוזמן: שם,טלפון,מספר צפויים)</label>
+      <textarea id="bulk-import-text" placeholder="דנה כהן,0501234567,2&#10;יוסי לוי,0507654321,1"></textarea>
+      <button type="button" id="bulk-import-btn">ייבוא</button>
+      <span id="bulk-import-status" class="status-msg"></span>
+
+      <hr class="divider">
+
+      <label for="file-import">או העלאת קובץ CSV / XLSX</label>
+      <p class="file-format-hint">
+        הקובץ צריך לכלול שלוש עמודות: <code>name</code> (שם), <code>phone</code> (טלפון) ו-<code>expected_guest</code>
+        (מספר צפוי, אופציונלי – ברירת מחדל 1). שורת הכותרות חייבת להיות באנגלית בדיוק כמו בדוגמה.
+        <a href="/assets/guest-template.csv" download>הורדת קובץ לדוגמה למילוי</a>
+      </p>
+      <input type="file" id="file-import" accept=".csv,.xlsx">
+      <span id="file-import-status" class="status-msg"></span>
+    </div>
+  </div>
+
+  <script>
+    const CONFIG_FIELDS = [
+      'couple_name_1', 'couple_name_2', 'wedding_date', 'wedding_time', 'venue_name', 'waze_link',
+      'bus_pickup_location', 'bus_destination_text', 'bus_departure_time', 'bus_return_time',
+      'whatsapp_message_template', 'whatsapp_country_code',
+    ];
+
+    const MEDIA_SLOTS = [
+      { slot: 'groom_photo', label: 'תמונת חתן' },
+      { slot: 'bride_photo', label: 'תמונת כלה' },
+      { slot: 'approval_gif', label: 'גיף אישור הגעה' },
+      { slot: 'decline_gif', label: 'גיף אי הגעה' },
+    ];
+
+    // {link} is mandatory in every template - it's the guest's personalized RSVP link -
+    // but its position in the text is entirely up to whoever picks/writes the template.
+    const TEMPLATE_PRESETS = [
+      {
+        label: 'חמה ואישית',
+        text: 'היי! 🎉 מוזמנים לחתונה שלנו! נשמח לראותכם 💕\nלאישור הגעה, לחצו כאן: {link}',
+      },
+      {
+        label: 'רשמית',
+        text: 'שלום רב,\nהוזמנתם לחתונתנו. נודה לכם על אישור הגעה בקישור הבא: {link}\nבתודה מראש.',
+      },
+      {
+        label: 'חגיגית',
+        text: '💍🎊 מתחתנים! ואתם ממש חייבים להיות שם!\nלאישור הגעה מהיר לחצו כאן: {link} 🥂',
+      },
+    ];
+
+    function populateTemplatePresets() {
+      const select = document.getElementById('template-preset-select');
+      TEMPLATE_PRESETS.forEach((preset, index) => {
+        const option = document.createElement('option');
+        option.value = String(index);
+        option.textContent = preset.label;
+        select.appendChild(option);
+      });
+
+      select.addEventListener('change', () => {
+        const preset = TEMPLATE_PRESETS[select.value];
+        if (preset) {
+          document.getElementById('whatsapp_message_template').value = preset.text;
+        }
+      });
+    }
+
+    function showStatus(el, message, isSuccess) {
+      el.textContent = message;
+      el.className = `status-msg ${isSuccess ? 'success' : 'error'}`;
+      setTimeout(() => { el.textContent = ''; }, 4000);
+    }
+
+    // --- Event settings ---
+    async function loadConfigForm() {
+      const res = await fetch('/api/admin/config');
+      if (!res.ok) return;
+      const config = await res.json();
+      CONFIG_FIELDS.forEach((field) => {
+        const el = document.getElementById(field);
+        if (el) el.value = config[field] || '';
+      });
+    }
+
+    document.getElementById('config-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const statusEl = document.getElementById('config-status');
+
+      const templateEl = document.getElementById('whatsapp_message_template');
+      if (templateEl.value && !templateEl.value.includes('{link}')) {
+        showStatus(statusEl, 'התבנית חייבת לכלול {link} - זהו הקישור האישי לאישור הגעה', false);
+        templateEl.focus();
+        return;
+      }
+
+      const body = {};
+      CONFIG_FIELDS.forEach((field) => {
+        body[field] = document.getElementById(field).value;
+      });
+
+      const res = await fetch('/api/admin/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        showStatus(statusEl, 'נשמר בהצלחה', true);
+      } else {
+        showStatus(statusEl, 'שגיאה בשמירה', false);
+      }
+    });
+
+    // --- Media ---
+    async function loadMediaSlots() {
+      const res = await fetch('/api/admin/media');
+      const existing = res.ok ? await res.json() : [];
+      const bySlot = {};
+      existing.forEach((row) => { bySlot[row.slot] = row; });
+
+      const container = document.getElementById('media-slots');
+      container.innerHTML = '';
+
+      MEDIA_SLOTS.forEach(({ slot, label }) => {
+        const row = document.createElement('div');
+        row.className = 'media-slot';
+        const current = bySlot[slot] ? bySlot[slot].filename : 'לא הועלה עדיין';
+        row.innerHTML = `
+          <span class="media-slot-name">${label}</span>
+          <span class="media-slot-current">${current}</span>
+          <input type="file" data-slot="${slot}" style="width:auto;">
+        `;
+        container.appendChild(row);
+
+        const input = row.querySelector('input[type="file"]');
+        input.addEventListener('change', async () => {
+          if (!input.files[0]) return;
+          const formData = new FormData();
+          formData.append('file', input.files[0]);
+          const uploadRes = await fetch(`/api/admin/media/${slot}`, { method: 'PUT', body: formData });
+          if (uploadRes.ok) {
+            await loadMediaSlots();
+          } else {
+            alert('שגיאה בהעלאת הקובץ');
+          }
+        });
+      });
+    }
+
+    // --- Guests ---
+    async function loadGuests() {
+      const res = await fetch('/api/invited-guests');
+      const guests = res.ok ? await res.json() : [];
+      const tbody = document.querySelector('#guests-table tbody');
+      tbody.innerHTML = '';
+
+      guests.forEach((guest) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${guest.name}</td>
+          <td>${guest.phone}</td>
+          <td>${guest.expected_guest}</td>
+          <td><button type="button" class="danger" data-phone="${guest.phone}">מחיקה</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll('button[data-phone]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('למחוק מוזמן זה?')) return;
+          await fetch(`/api/invited-guests/${encodeURIComponent(btn.dataset.phone)}`, { method: 'DELETE' });
+          await loadGuests();
+        });
+      });
+    }
+
+    document.getElementById('add-single-btn').addEventListener('click', async () => {
+      const statusEl = document.getElementById('single-add-status');
+      const name = document.getElementById('single-name').value.trim();
+      const phone = document.getElementById('single-phone').value.trim();
+      if (!name || !phone) {
+        showStatus(statusEl, 'יש למלא שם וטלפון', false);
+        return;
+      }
+
+      const res = await fetch('/api/invited-guests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, expected_guest: 1 }),
+      });
+
+      if (res.ok) {
+        showStatus(statusEl, 'המוזמן נוסף בהצלחה', true);
+        document.getElementById('single-name').value = '';
+        document.getElementById('single-phone').value = '';
+        await loadGuests();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showStatus(statusEl, data.error || 'שגיאה בהוספת מוזמן', false);
+      }
+    });
+
+    document.getElementById('file-import').addEventListener('change', async (e) => {
+      const statusEl = document.getElementById('file-import-status');
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/invited-guests/upload', { method: 'POST', body: formData });
+      if (res.ok) {
+        const result = await res.json();
+        showStatus(statusEl, `יובאו ${result.imported} מוזמנים מהקובץ${result.errors.length ? `, ${result.errors.length} שגיאות` : ''}`, result.errors.length === 0);
+        await loadGuests();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showStatus(statusEl, data.error || 'שגיאה בהעלאת הקובץ', false);
+      }
+      e.target.value = '';
+    });
+
+    document.getElementById('logout-link').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/login/';
+    });
+
+    document.getElementById('bulk-import-btn').addEventListener('click', async () => {
+      const statusEl = document.getElementById('bulk-import-status');
+      const text = document.getElementById('bulk-import-text').value;
+      if (!text.trim()) return;
+
+      const res = await fetch('/api/invited-guests/bulk-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        showStatus(statusEl, `יובאו ${result.imported} מוזמנים${result.errors.length ? `, ${result.errors.length} שגיאות` : ''}`, result.errors.length === 0);
+        document.getElementById('bulk-import-text').value = '';
+        await loadGuests();
+      } else {
+        showStatus(statusEl, 'שגיאה בייבוא', false);
+      }
+    });
+
+    populateTemplatePresets();
+    loadConfigForm();
+    loadMediaSlots();
+    loadGuests();
+  </script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>הרשמה</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: linear-gradient(135deg, #fff7ed, #fed7aa);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      color: #1f2937;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 380px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(249, 115, 22, 0.15);
+      padding: 2rem 1.8rem;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      color: #ea580c;
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 0.4rem;
+    }
+
+    p.subtitle {
+      text-align: center;
+      color: #6b7280;
+      font-size: 0.9rem;
+      margin-top: 0;
+      margin-bottom: 1.2rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 500;
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+      margin-top: 0.9rem;
+      color: #4b5563;
+    }
+
+    input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border: 2px solid rgba(249, 115, 22, 0.2);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: #fff;
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: #9ca3af;
+      margin-top: 0.3rem;
+    }
+
+    button {
+      width: 100%;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 0.8rem 1.4rem;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 1.4rem;
+    }
+
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .status-msg {
+      margin-top: 0.8rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-align: center;
+      min-height: 1.2em;
+    }
+
+    .status-msg.error { color: #ef4444; }
+
+    .switch-link {
+      text-align: center;
+      margin-top: 1.2rem;
+      font-size: 0.9rem;
+    }
+
+    .switch-link a { color: #ea580c; font-weight: 600; text-decoration: none; }
+    .switch-link a:hover { text-decoration: underline; }
+
+    .google-signin-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin: 1.2rem 0;
+      color: #9ca3af;
+      font-size: 0.85rem;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>יצירת חשבון</h1>
+    <p class="subtitle">נהלו את אישורי ההגעה לחתונה שלכם</p>
+    <div id="google-signin-container" class="google-signin-container" style="display:none;">
+      <div id="google-signin-button"></div>
+    </div>
+    <div id="google-divider" class="divider" style="display:none;">או</div>
+    <form id="signup-form">
+      <label for="email">אימייל</label>
+      <input type="email" id="email" name="email" required autocomplete="email">
+      <label for="password">סיסמה</label>
+      <input type="password" id="password" name="password" required autocomplete="new-password" minlength="8">
+      <div class="hint">לפחות 8 תווים</div>
+      <button type="submit">הרשמה</button>
+      <div id="status" class="status-msg"></div>
+    </form>
+    <div class="switch-link">
+      כבר יש לך חשבון? <a href="/login/">התחברות</a>
+    </div>
+  </div>
+
+  <script>
+    async function handleGoogleCredential(response) {
+      const statusEl = document.getElementById('status');
+      try {
+        const res = await fetch('/api/auth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential: response.credential }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          window.location.href = data.isNewUser ? '/onboarding/' : '/admin/';
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+        statusEl.textContent = data.error || 'שגיאה בהרשמה עם Google';
+        statusEl.className = 'status-msg error';
+      } catch (err) {
+        statusEl.textContent = 'שגיאת רשת, נסו שוב';
+        statusEl.className = 'status-msg error';
+      }
+    }
+
+    (async function initGoogleSignIn() {
+      try {
+        const res = await fetch('/api/auth/google-client-id');
+        const { clientId } = await res.json();
+        if (!clientId || !window.google) return;
+
+        google.accounts.id.initialize({ client_id: clientId, callback: handleGoogleCredential });
+        document.getElementById('google-signin-container').style.display = 'flex';
+        document.getElementById('google-divider').style.display = 'flex';
+        google.accounts.id.renderButton(document.getElementById('google-signin-button'), {
+          theme: 'outline', size: 'large', width: 300, text: 'signup_with',
+        });
+      } catch (err) {
+        console.error('Google sign-in unavailable:', err);
+      }
+    })();
+
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const statusEl = document.getElementById('status');
+      const submitBtn = e.target.querySelector('button');
+      statusEl.textContent = '';
+      statusEl.className = 'status-msg';
+      submitBtn.disabled = true;
+
+      try {
+        const res = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+          }),
+        });
+
+        if (res.ok) {
+          window.location.href = '/onboarding/';
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+        statusEl.textContent = data.error || 'שגיאה בהרשמה';
+        statusEl.className = 'status-msg error';
+      } catch (err) {
+        statusEl.textContent = 'שגיאת רשת, נסו שוב';
+        statusEl.className = 'status-msg error';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+node_modules/
+.env
+.DS_Store
+
+wedding/server/data/
+wedding/bulk-messaging/message-template.txt
+wedding/bulk-messaging/bulk-send-results.json

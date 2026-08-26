@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>דשבורד אישורי הגעה - איה ועידו</title>
+  <title>דשבורד אישורי הגעה</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
     
@@ -265,6 +265,23 @@
       transition: all 0.3s ease;
     }
     
+    .search-input {
+      width: 100%;
+      padding: 0.7rem 1rem;
+      margin-bottom: 1rem;
+      border: 2px solid rgba(249, 115, 22, 0.2);
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: #fff;
+      direction: rtl;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #ea580c;
+    }
+
     .table-container:hover {
       transform: translateY(-3px);
       box-shadow: 0 12px 32px rgba(249, 115, 22, 0.15);
@@ -363,12 +380,49 @@
         padding: 0.8rem 0.5rem;
       }
     }
+
+    .admin-nav {
+      display: flex;
+      gap: 0.6rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.2rem;
+    }
+
+    .admin-nav-link {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #ea580c;
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 0.5rem 1.1rem;
+      border-radius: 10px;
+    }
+
+    .admin-nav-link:hover { background: #fff; }
+
+    .admin-nav-link.active {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+    }
+
+    .admin-nav-link.admin-nav-logout {
+      margin-inline-start: auto;
+      color: #6b7280;
+      background: none;
+    }
   </style>
 </head>
 <body>
   <div class="dashboard-container">
-    <h1>דשבורד אישורי הגעה - איה ועידו</h1>
-    
+    <nav class="admin-nav">
+      <a href="/dashboard/" class="admin-nav-link active">דשבורד</a>
+      <a href="/admin/" class="admin-nav-link">ניהול</a>
+      <a href="/bulk-messaging/" class="admin-nav-link">שליחה המונית</a>
+      <a href="#" class="admin-nav-link admin-nav-logout" id="logout-link">יציאה</a>
+    </nav>
+    <h1 id="page-title">דשבורד אישורי הגעה</h1>
+
     <div class="tabs">
       <button class="tab-btn active" id="tab-rsvp">אישורי הגעה</button>
       <button class="tab-btn" id="tab-invited">רשימת מוזמנים</button>
@@ -394,6 +448,7 @@
     </div>
     
     <div class="table-container" id="rsvp-table-container">
+      <input type="text" id="rsvp-search" class="search-input" placeholder="חיפוש לפי שם או טלפון...">
       <table id="rsvp-table">
         <thead>
           <tr>
@@ -410,6 +465,7 @@
     </div>
     
     <div class="table-container" id="invited-table-container" style="display:none;">
+      <input type="text" id="invited-search" class="search-input" placeholder="חיפוש לפי שם או טלפון...">
       <table id="invited-table">
         <thead>
           <tr>
@@ -425,15 +481,31 @@
     </div>
   </div>
   <script>
-    // Replace with your SheetDB API endpoint
-    const SHEETDB_API = 'https://sheetdb.io/api/v1/pimc3ptqia34k';
-    // Add your invited guests SheetDB endpoint (should return [{name, phone, expected_guest}])
-    const INVITED_API = 'https://sheetdb.io/api/v1/a2omrjytm7xx3'; // <-- Replace with your invited guests endpoint
-    // Set your total invited here (or fetch from SheetDB if you store it there)
-    const TOTAL_INVITED = 233;
+    let totalInvited = 0;
+
+    // Small wrapper so an expired/cleared session bounces back to the login page
+    // instead of silently rendering an empty dashboard.
+    async function apiFetch(url, options) {
+      const res = await fetch(url, options);
+      if (res.status === 401) {
+        window.location.href = '/login/';
+        throw new Error('Not authenticated');
+      }
+      return res;
+    }
+
+    async function loadConfig() {
+      const res = await apiFetch('/api/admin/config');
+      if (!res.ok) return;
+      const config = await res.json();
+      const title = `דשבורד אישורי הגעה - ${config.couple_name_1} ${config.couple_name_2}`;
+      document.title = title;
+      document.getElementById('page-title').textContent = title;
+      totalInvited = config.totalInvited;
+    }
 
     async function fetchRSVPs() {
-      const res = await fetch(SHEETDB_API);
+      const res = await apiFetch('/api/rsvps');
       if (!res.ok) return [];
       return await res.json();
     }
@@ -444,29 +516,24 @@
       return d.toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' });
     }
 
-    async function renderTableWithNames(data) {
+    let rsvpRows = [];
+    let invitedRows = [];
+
+    function filterBySearch(rows, query) {
+      const q = query.trim().toLowerCase();
+      if (!q) return rows;
+      return rows.filter(row =>
+        (row.name || '').toLowerCase().includes(q) || (row.phone || '').toLowerCase().includes(q)
+      );
+    }
+
+    function renderRsvpRows(rows) {
       const tbody = document.querySelector('#rsvp-table tbody');
       tbody.innerHTML = '';
-      
-      // Fetch invited guests list
-      let invitedGuests = [];
-      try {
-        const invitedRes = await fetch(INVITED_API);
-        if (invitedRes.ok) {
-          invitedGuests = await invitedRes.json();
-        }
-      } catch (error) {
-        console.error('Error fetching invited guests:', error);
-      }
-      
-      data.forEach(row => {
-        // Find matching guest by phone number
-        const invitedGuest = invitedGuests.find(g => g.phone === row.phone);
-        const guestName = invitedGuest ? invitedGuest.name : '';
-        
+      rows.forEach(row => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${guestName}</td>
+          <td>${row.name}</td>
           <td>${row.phone || ''}</td>
           <td>${row.guests || ''}</td>
           <td>${formatDate(row.timestamp)}</td>
@@ -475,16 +542,37 @@
       });
     }
 
+    async function renderTableWithNames(data) {
+      // Fetch invited guests list
+      let invitedGuests = [];
+      try {
+        const invitedRes = await apiFetch('/api/invited-guests');
+        if (invitedRes.ok) {
+          invitedGuests = await invitedRes.json();
+        }
+      } catch (error) {
+        console.error('Error fetching invited guests:', error);
+      }
+
+      rsvpRows = data.map(row => {
+        // Find matching guest by phone number
+        const invitedGuest = invitedGuests.find(g => g.phone === row.phone);
+        return { ...row, name: invitedGuest ? invitedGuest.name : '' };
+      });
+
+      renderRsvpRows(filterBySearch(rsvpRows, document.getElementById('rsvp-search').value));
+    }
+
     function renderStats(data) {
       // Sum all guests
       const approved = data.reduce((sum, row) => {
         const guests = parseInt(row.guests, 10);
         return sum + (isNaN(guests) ? 0 : guests);
       }, 0);
-      const notApproved = Math.max(TOTAL_INVITED - approved, 0);
-      const percentNotApproved = TOTAL_INVITED > 0 ? ((notApproved / TOTAL_INVITED) * 100).toFixed(1) : '0.0';
+      const notApproved = Math.max(totalInvited - approved, 0);
+      const percentNotApproved = totalInvited > 0 ? ((notApproved / totalInvited) * 100).toFixed(1) : '0.0';
       document.getElementById('approved').textContent = approved;
-      document.getElementById('total-invited').textContent = TOTAL_INVITED;
+      document.getElementById('total-invited').textContent = totalInvited;
       document.getElementById('not-approved').textContent = notApproved;
       document.getElementById('not-approved-percent').textContent = percentNotApproved + '%';
     }
@@ -496,15 +584,15 @@
     }
 
     async function fetchInvited() {
-      const res = await fetch(INVITED_API);
+      const res = await apiFetch('/api/invited-guests');
       if (!res.ok) return [];
       return await res.json();
     }
 
-    function renderInvitedTable(data) {
+    function renderInvitedTable(rows) {
       const tbody = document.querySelector('#invited-table tbody');
       tbody.innerHTML = '';
-      data.forEach(row => {
+      rows.forEach(row => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${row.name || ''}</td>
@@ -516,8 +604,8 @@
     }
 
     async function loadInvitedTable() {
-      const data = await fetchInvited();
-      renderInvitedTable(data);
+      invitedRows = await fetchInvited();
+      renderInvitedTable(filterBySearch(invitedRows, document.getElementById('invited-search').value));
     }
 
     // Tab switching logic
@@ -537,7 +625,24 @@
       loadInvitedTable();
     });
 
-    loadDashboard();
+    document.getElementById('logout-link').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/login/';
+    });
+
+    document.getElementById('rsvp-search').addEventListener('input', (e) => {
+      renderRsvpRows(filterBySearch(rsvpRows, e.target.value));
+    });
+
+    document.getElementById('invited-search').addEventListener('input', (e) => {
+      renderInvitedTable(filterBySearch(invitedRows, e.target.value));
+    });
+
+    (async function init() {
+      await loadConfig();
+      await loadDashboard();
+    })();
   </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>איה ועידו - הרשמה להסעה</title>
+  <title>הרשמה להסעה</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
     
@@ -395,17 +395,17 @@
   <div class="container">
     <div class="bus-header">
       <h1 class="bus-title">
-        <img src="sticker.png" alt="sticker" class="wedding-sticker">
-        רישום להסעה 
-        <img src="stickerido.png" alt="sticker" class="wedding-sticker">
+        <img id="groom-photo" src="" alt="" class="wedding-sticker" style="display:none;" onerror="this.style.display='none'">
+        רישום להסעה
+        <img id="bride-photo" src="" alt="" class="wedding-sticker" style="display:none;" onerror="this.style.display='none'">
       </h1>
-      <p class="bus-subtitle">החתונה של איה ועידו</p>
+      <p class="bus-subtitle" id="bus-subtitle">החתונה</p>
         <div class="bus-info">
-          מכיכר הבימה בתל אביב <br>
-          לחתונה שבמזכרת בתיה<br>
+          <span id="bus-pickup-text"></span><br>
+          <span id="bus-destination-text"></span><br>
           🎊<br>
-          יוצאת בשעה 13:15<br>
-          חוזרת בשעה 21:30
+          יוצאת בשעה <span id="bus-departure-text"></span><br>
+          חוזרת בשעה <span id="bus-return-text"></span>
         </div>
     </div>
     
@@ -554,9 +554,6 @@
   </div>
   
   <script>
-    // SheetDB API endpoint
-    const SHEETDB_API = 'https://sheetdb.io/api/v1/xuaafb188ec30';
-    
     const form = document.getElementById('bus-form');
     const attendanceForm = document.getElementById('attendance-form');
     const confirmation = document.getElementById('confirmation');
@@ -593,7 +590,41 @@
       const results = regex.exec(location.search);
       return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
     }
-    
+
+    // Every guest link carries the tenant (account) id: /bus-approval/?u=<tenantId>&phone=<phone>
+    const TENANT_ID = getUrlParameter('u');
+
+    // Function to load event config and populate the page
+    async function loadConfig() {
+      try {
+        const response = await fetch(`/api/public/${TENANT_ID}/config`);
+        if (!response.ok) return;
+        const config = await response.json();
+
+        document.title = `${config.couple_name_1} ${config.couple_name_2} - הרשמה להסעה`;
+        document.getElementById('bus-subtitle').textContent = `החתונה של ${config.couple_name_1} ${config.couple_name_2}`;
+        document.getElementById('bus-pickup-text').textContent = config.bus_pickup_location;
+        document.getElementById('bus-destination-text').textContent = config.bus_destination_text;
+        document.getElementById('bus-departure-text').textContent = config.bus_departure_time;
+        document.getElementById('bus-return-text').textContent = config.bus_return_time;
+
+        const groomPhoto = document.getElementById('groom-photo');
+        if (groomPhoto) { groomPhoto.src = `/media/${TENANT_ID}/groom_photo`; groomPhoto.style.display = 'inline-block'; }
+        const bridePhoto = document.getElementById('bride-photo');
+        if (bridePhoto) { bridePhoto.src = `/media/${TENANT_ID}/bride_photo`; bridePhoto.style.display = 'inline-block'; }
+      } catch (error) {
+        console.error('Error fetching config:', error);
+      }
+    }
+
+    // Function to fetch an existing bus registration for a phone number, or null if none exists
+    async function fetchExistingRegistration(phone) {
+      const res = await fetch(`/api/public/${TENANT_ID}/bus-registrations/` + encodeURIComponent(phone));
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error();
+      return await res.json();
+    }
+
     // Auto-fill form from URL parameters
     function autoFillFromUrl() {
       const phone = getUrlParameter('phone');
@@ -725,26 +756,26 @@
       
       const formData = new FormData(form);
       const data = {
-        'שם מלא': formData.get('fullName').trim(),
-        'טלפון': formData.get('phone').trim(),
-        'כמות אנשים בהלוך': parseInt(formData.get('goingCount')),
-        'כמות אנשים בחזור': parseInt(formData.get('returnCount')),
-        'הגיע הלוך': formData.get('goingConfirmed') === 'on',
-        'הגיע חזור': formData.get('returnConfirmed') === 'on'
+        full_name: formData.get('fullName').trim(),
+        phone: formData.get('phone').trim(),
+        going_count: parseInt(formData.get('goingCount')),
+        return_count: parseInt(formData.get('returnCount')),
+        going_confirmed: formData.get('goingConfirmed') === 'on',
+        return_confirmed: formData.get('returnConfirmed') === 'on'
       };
-      
+
       // Validation
-      if (!data['שם מלא']) {
+      if (!data.full_name) {
         showConfirmation('אנא הזן שם מלא', false);
         return;
       }
-      
-      if (!data['טלפון'] || !validatePhone(data['טלפון'])) {
+
+      if (!data.phone || !validatePhone(data.phone)) {
         showConfirmation('אנא הזן מספר טלפון תקין', false);
         return;
       }
-      
-      if (data['כמות אנשים בהלוך'] < 0 || data['כמות אנשים בחזור'] < 0) {
+
+      if (data.going_count < 0 || data.return_count < 0) {
         showConfirmation('אנא בחר מספר אנשים תקין', false);
         return;
       }
@@ -753,41 +784,29 @@
       
       try {
         // Check if phone number already exists
-        const checkResponse = await fetch(`${SHEETDB_API}/search?טלפון=${encodeURIComponent(data['טלפון'])}`);
-        let existing = [];
-        if (checkResponse.ok) {
-          existing = await checkResponse.json();
-        }
-        
-        if (existing.length > 0) {
-          // Find the latest entry for this phone
-          const lastEntry = existing.reduce((latest, entry) => {
-            if (!latest) return entry;
-            return new Date(entry.timestamp || 0) > new Date(latest.timestamp || 0) ? entry : latest;
-          }, null);
-          
-          const prevGoing = lastEntry && lastEntry['כמות אנשים בהלוך'] ? lastEntry['כמות אנשים בהלוך'] : '0';
-          const prevReturn = lastEntry && lastEntry['כמות אנשים בחזור'] ? lastEntry['כמות אנשים בחזור'] : '0';
-          
-          const userWantsUpdate = await showUpdateModal(prevGoing, data['כמות אנשים בהלוך'], prevReturn, data['כמות אנשים בחזור']);
-          
+        const existing = await fetchExistingRegistration(data.phone);
+
+        if (existing) {
+          const prevGoing = existing.going_count ?? '0';
+          const prevReturn = existing.return_count ?? '0';
+
+          const userWantsUpdate = await showUpdateModal(prevGoing, data.going_count, prevReturn, data.return_count);
+
           if (!userWantsUpdate) {
             showConfirmation('ההרשמה בוטלה. הנתונים הקודמים נשמרו.', false);
             hideLoading();
             return;
           }
-          
+
           // Update existing entry
-          const response = await fetch(`${SHEETDB_API}/טלפון/${encodeURIComponent(data['טלפון'])}`, {
-            method: 'PATCH',
+          const response = await fetch(`/api/public/${TENANT_ID}/bus-registrations/` + encodeURIComponent(data.phone), {
+            method: 'PUT',
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-              data: data
-            })
+            body: JSON.stringify(data)
           });
-          
+
           if (response.ok) {
             showConfirmation('ההרשמה עודכנה בהצלחה! 🚌', true);
             form.reset();
@@ -796,16 +815,14 @@
           }
         } else {
           // Create new entry
-          const response = await fetch(SHEETDB_API, {
+          const response = await fetch(`/api/public/${TENANT_ID}/bus-registrations`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-              data: [data]
-            })
+            body: JSON.stringify(data)
           });
-          
+
           if (response.ok) {
             showConfirmation('ההרשמה נשלחה בהצלחה! 🚌', true);
             form.reset();
@@ -827,52 +844,46 @@
       
       const formData = new FormData(attendanceForm);
       const data = {
-        'שם מלא': formData.get('attendanceName').trim(),
-        'טלפון': formData.get('attendancePhone').trim(),
-        'כמות אנשים בהלוך': 0,
-        'כמות אנשים בחזור': 0,
-        'הגיע הלוך': formData.get('onBusGoing') === 'on',
-        'הגיע חזור': formData.get('onBusReturn') === 'on'
+        full_name: formData.get('attendanceName').trim(),
+        phone: formData.get('attendancePhone').trim(),
+        going_count: 0,
+        return_count: 0,
+        going_confirmed: formData.get('onBusGoing') === 'on',
+        return_confirmed: formData.get('onBusReturn') === 'on'
       };
-      
+
       // Validation
-      if (!data['שם מלא']) {
+      if (!data.full_name) {
         showConfirmation('אנא הזן שם מלא', false);
         return;
       }
-      
-      if (!data['טלפון'] || !validatePhone(data['טלפון'])) {
+
+      if (!data.phone || !validatePhone(data.phone)) {
         showConfirmation('אנא הזן מספר טלפון תקין', false);
         return;
       }
-      
-      if (!data['הגיע הלוך'] && !data['הגיע חזור']) {
+
+      if (!data.going_confirmed && !data.return_confirmed) {
         showConfirmation('אנא בחר לפחות אפשרות אחת', false);
         return;
       }
-      
+
       showLoading();
-      
+
       try {
         // Check if phone number already exists
-        const checkResponse = await fetch(`${SHEETDB_API}/search?טלפון=${encodeURIComponent(data['טלפון'])}`);
-        let existing = [];
-        if (checkResponse.ok) {
-          existing = await checkResponse.json();
-        }
-        
-        if (existing.length > 0) {
+        const existing = await fetchExistingRegistration(data.phone);
+
+        if (existing) {
           // Update existing entry
-          const response = await fetch(`${SHEETDB_API}/טלפון/${encodeURIComponent(data['טלפון'])}`, {
-            method: 'PATCH',
+          const response = await fetch(`/api/public/${TENANT_ID}/bus-registrations/` + encodeURIComponent(data.phone), {
+            method: 'PUT',
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-              data: data
-            })
+            body: JSON.stringify(data)
           });
-          
+
           if (response.ok) {
             showConfirmation('אישור הנוכחות עודכן בהצלחה! 🚌', true);
             attendanceForm.reset();
@@ -881,16 +892,14 @@
           }
         } else {
           // Create new entry
-          const response = await fetch(SHEETDB_API, {
+          const response = await fetch(`/api/public/${TENANT_ID}/bus-registrations`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-              data: [data]
-            })
+            body: JSON.stringify(data)
           });
-          
+
           if (response.ok) {
             showConfirmation('אישור הנוכחות נשלח בהצלחה! 🚌', true);
             attendanceForm.reset();
@@ -906,7 +915,8 @@
       }
     });
     
-    // Auto-fill form on page load
+    // Initialize page on load
+    loadConfig();
     autoFillFromUrl();
   </script>
 </body>

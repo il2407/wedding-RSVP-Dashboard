@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bulk WhatsApp Sender - איה ועידו</title>
+    <title>Bulk WhatsApp Sender</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap');
         
@@ -120,7 +120,28 @@
             cursor: not-allowed;
             transform: none;
         }
-        
+
+        .secondary-btn {
+            background: #e5e7eb;
+            color: #374151;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        .secondary-btn:hover {
+            background: #d1d5db;
+        }
+
+        .secondary-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .status {
             margin-top: 1rem;
             padding: 1rem;
@@ -152,40 +173,60 @@
             background: linear-gradient(90deg, #f97316, #ea580c);
             transition: width 0.3s ease;
         }
+
+        .admin-nav {
+            display: flex;
+            gap: 0.6rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 1.2rem;
+        }
+
+        .admin-nav-link {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #ea580c;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 0.5rem 1.1rem;
+            border-radius: 10px;
+        }
+
+        .admin-nav-link:hover { background: #fff; }
+
+        .admin-nav-link.active {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: #fff;
+        }
+
+        .admin-nav-link.admin-nav-logout {
+            margin-inline-start: auto;
+            color: #6b7280;
+            background: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Bulk WhatsApp Sender - איה ועידו</h1>
-        
+        <nav class="admin-nav">
+            <a href="/dashboard/" class="admin-nav-link">דשבורד</a>
+            <a href="/admin/" class="admin-nav-link">ניהול</a>
+            <a href="/bulk-messaging/" class="admin-nav-link active">שליחה המונית</a>
+            <a href="#" class="admin-nav-link admin-nav-logout" id="logout-link">יציאה</a>
+        </nav>
+        <h1 id="page-title">Bulk WhatsApp Sender</h1>
+
         <div class="form-group">
             <label for="message-template">Message Template:</label>
-            <textarea id="message-template" placeholder="Enter your message template here. Use {phone} to insert the phone number and {link} to insert the personalized link.">
-היי! 
-
-שמחים להזמין אתכם לחתונה שלנו! 🎊
-
-בתאריך: 7.11.2024
-בשעה: 14:00
-
-לחצו על הקישור למטה כדי לאשר הגעה:
-{link}
-
-נשמח לראותכם!
-
-איה ועידו</textarea>
+            <textarea id="message-template" placeholder="Enter your message template here. Use {phone} to insert the phone number and {link} to insert the personalized link."></textarea>
         </div>
-        
+
         <div class="form-group">
             <label for="phone-numbers">Phone Numbers (one per line):</label>
             <textarea id="phone-numbers" class="phone-list" placeholder="0541234567&#10;0547654321&#10;0509876543"></textarea>
+            <button type="button" class="secondary-btn" id="load-invited-btn">Load all invited guests</button>
         </div>
-        
-        <div class="form-group">
-            <label for="base-url">Base URL:</label>
-            <input type="text" id="base-url" value="https://fluffy-salmiakki-980cb0.netlify.app/" placeholder="https://your-domain.com/">
-        </div>
-        
+
         <button class="send-btn" onclick="previewMessages()">Preview Messages</button>
         
         <div id="preview-container" style="display: none;">
@@ -208,13 +249,105 @@
     </div>
 
     <script>
+        let currentUserId = null;
+        let countryCode = '';
+        // The RSVP form is always served from this same app/domain, so there's nothing
+        // for the admin to configure here.
+        const RSVP_BASE_URL = window.location.origin + '/rsvp-form/';
+
+        // wa.me links require the full international number with no leading zero and no
+        // "+" (e.g. 972501234567), while the guest list itself, the {phone} substitution,
+        // and the personalized RSVP link all keep using the phone number as typed (e.g.
+        // 0501234567) so it still matches what's stored for that guest.
+        function toWhatsAppNumber(phone) {
+            const digits = phone.replace(/\D/g, '');
+            if (countryCode && digits.startsWith(countryCode)) return digits;
+            return `${countryCode}${digits.replace(/^0+/, '')}`;
+        }
+
+        // A number is safe to convert automatically if it's either a local number
+        // (starts with 0) or already carries the account's country code. Anything else
+        // (missing digits, a typo, or a different country's number without its own code)
+        // would get the wrong country code prepended and silently fail to open in WhatsApp.
+        function isMissingCountryPrefix(phone) {
+            const digits = phone.replace(/\D/g, '');
+            if (digits.startsWith('0')) return false;
+            if (countryCode && digits.startsWith(countryCode)) return false;
+            return true;
+        }
+
+        async function loadCurrentUser() {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (!res.ok) return;
+                const user = await res.json();
+                currentUserId = user.id;
+            } catch (error) {
+                console.error('Error fetching current user:', error);
+            }
+        }
+
+        async function loadConfig() {
+            try {
+                const res = await fetch('/api/admin/config');
+                if (!res.ok) return;
+                const config = await res.json();
+
+                const title = `Bulk WhatsApp Sender - ${config.couple_name_1} ${config.couple_name_2}`;
+                document.title = title;
+                document.getElementById('page-title').textContent = title;
+                document.getElementById('message-template').value = config.whatsapp_message_template || '';
+                countryCode = (config.whatsapp_country_code || '').replace(/\D/g, '');
+            } catch (error) {
+                console.error('Error fetching config:', error);
+            }
+        }
+        loadCurrentUser();
+        loadConfig();
+
+        document.getElementById('logout-link').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login/';
+        });
+
+        document.getElementById('load-invited-btn').addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/invited-guests');
+                if (!res.ok) {
+                    showStatus('Could not load the invited guest list.', 'error');
+                    return;
+                }
+                const guests = await res.json();
+                if (guests.length === 0) {
+                    showStatus('Your invited guest list is empty.', 'error');
+                    return;
+                }
+                document.getElementById('phone-numbers').value = guests.map(g => g.phone).join('\n');
+                showStatus(`Loaded ${guests.length} phone number(s) from your invited guest list.`, 'success');
+            } catch (error) {
+                console.error('Error loading invited guests:', error);
+                showStatus('Could not load the invited guest list.', 'error');
+            }
+        });
+
+        function buildPersonalizedLink(baseUrl, phone) {
+            const separator = baseUrl.includes('?') ? '&' : '?';
+            return `${baseUrl}${separator}u=${currentUserId}&phone=${phone}`;
+        }
+
         function previewMessages() {
             const template = document.getElementById('message-template').value;
             const phoneNumbers = document.getElementById('phone-numbers').value.split('\n').filter(phone => phone.trim());
-            const baseUrl = document.getElementById('base-url').value;
+            const baseUrl = RSVP_BASE_URL;
             
             if (!template || phoneNumbers.length === 0) {
                 showStatus('Please fill in both message template and phone numbers.', 'error');
+                return;
+            }
+
+            if (!template.includes('{link}')) {
+                showStatus('Template must include {link} so guests can reach their RSVP form.', 'error');
                 return;
             }
             
@@ -225,7 +358,7 @@
             phoneNumbers.forEach((phone, index) => {
                 const cleanPhone = phone.trim();
                 if (cleanPhone) {
-                    const personalizedLink = `${baseUrl}?phone=${cleanPhone}`;
+                    const personalizedLink = buildPersonalizedLink(baseUrl, cleanPhone);
                     const message = template
                         .replace(/{phone}/g, cleanPhone)
                         .replace(/{link}/g, personalizedLink);
@@ -247,13 +380,36 @@
         function sendBulkMessages() {
             const template = document.getElementById('message-template').value;
             const phoneNumbers = document.getElementById('phone-numbers').value.split('\n').filter(phone => phone.trim());
-            const baseUrl = document.getElementById('base-url').value;
+            const baseUrl = RSVP_BASE_URL;
             
             if (!template || phoneNumbers.length === 0) {
                 showStatus('Please fill in both message template and phone numbers.', 'error');
                 return;
             }
-            
+
+            if (!template.includes('{link}')) {
+                showStatus('Template must include {link} so guests can reach their RSVP form.', 'error');
+                return;
+            }
+
+            if (!countryCode) {
+                showStatus('Set a WhatsApp country code in event settings first (e.g. 972) so numbers open correctly in WhatsApp.', 'error');
+                return;
+            }
+
+            const suspiciousNumbers = phoneNumbers.map(p => p.trim()).filter(isMissingCountryPrefix);
+            if (suspiciousNumbers.length > 0) {
+                const proceed = confirm(
+                    `The following number(s) don't start with "0" or the country code (${countryCode}), so WhatsApp may not open them correctly:\n\n` +
+                    suspiciousNumbers.join('\n') +
+                    '\n\nSend anyway?'
+                );
+                if (!proceed) {
+                    showStatus('Cancelled. Please fix the flagged phone number(s) and try again.', 'error');
+                    return;
+                }
+            }
+
             const sendBtn = document.querySelector('.send-btn');
             const progress = document.getElementById('progress');
             const progressBar = document.getElementById('progress-bar');
@@ -269,12 +425,12 @@
             phoneNumbers.forEach((phone, index) => {
                 const cleanPhone = phone.trim();
                 if (cleanPhone) {
-                    const personalizedLink = `${baseUrl}?phone=${cleanPhone}`;
+                    const personalizedLink = buildPersonalizedLink(baseUrl, cleanPhone);
                     const message = template
                         .replace(/{phone}/g, cleanPhone)
                         .replace(/{link}/g, personalizedLink);
                     
-                    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+                    const whatsappUrl = `https://wa.me/${toWhatsAppNumber(cleanPhone)}?text=${encodeURIComponent(message)}`;
                     whatsappUrls.push({
                         phone: cleanPhone,
                         url: whatsappUrl,

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>הגדרת האירוע</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: linear-gradient(135deg, #fff7ed, #fed7aa);
+      margin: 0;
+      padding: 2rem 1rem;
+      color: #1f2937;
+    }
+
+    .container { max-width: 640px; margin: 0 auto; }
+
+    .steps {
+      display: flex;
+      justify-content: center;
+      gap: 0.6rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .step-dot {
+      width: 2.4rem;
+      height: 2.4rem;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid rgba(249, 115, 22, 0.3);
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .step-dot.active {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      border-color: transparent;
+      color: #fff;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(249, 115, 22, 0.15);
+      padding: 1.8rem;
+    }
+
+    .card h1 {
+      color: #ea580c;
+      font-size: 1.4rem;
+      margin-top: 0;
+    }
+
+    .card p.subtitle {
+      color: #6b7280;
+      font-size: 0.9rem;
+      margin-top: -0.6rem;
+      margin-bottom: 1.4rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 500;
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+      margin-top: 0.9rem;
+      color: #4b5563;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 0.6rem 0.9rem;
+      border: 2px solid rgba(249, 115, 22, 0.2);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: #fff;
+    }
+
+    textarea { resize: vertical; min-height: 90px; }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 1rem;
+    }
+
+    @media (max-width: 480px) { .two-col { grid-template-columns: 1fr; } }
+
+    .media-slot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .media-slot:last-child { border-bottom: none; }
+    .media-slot-name { font-weight: 600; min-width: 130px; font-size: 0.9rem; }
+    .media-slot input[type="file"] { flex: 1; font-size: 0.85rem; }
+
+    button {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 0.7rem 1.4rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 1.4rem;
+    }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .actions {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .skip-link {
+      margin-inline-start: auto;
+      font-size: 0.85rem;
+      color: #9ca3af;
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      margin-top: 1.4rem;
+    }
+
+    .status-msg { margin-top: 0.8rem; font-weight: 600; font-size: 0.9rem; }
+    .status-msg.success { color: #10b981; }
+    .status-msg.error { color: #ef4444; }
+
+    .guest-count {
+      font-size: 0.85rem;
+      color: #6b7280;
+      margin-top: 0.6rem;
+    }
+
+    hr.divider {
+      border: none;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      margin: 1.4rem 0;
+    }
+
+    .file-format-hint {
+      font-size: 0.82rem;
+      color: #6b7280;
+      margin: 0.4rem 0 0.6rem 0;
+      line-height: 1.6;
+    }
+
+    .file-format-hint code {
+      background: rgba(249, 115, 22, 0.1);
+      color: #ea580c;
+      padding: 0.1rem 0.35rem;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      direction: ltr;
+      display: inline-block;
+    }
+
+    .file-format-hint a {
+      display: block;
+      margin-top: 0.3rem;
+      color: #ea580c;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .file-format-hint a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="steps">
+      <div class="step-dot active" id="dot-1">1</div>
+      <div class="step-dot" id="dot-2">2</div>
+    </div>
+
+    <div class="card" id="step-1">
+      <h1>פרטי הזוג</h1>
+      <p class="subtitle">התמונות והגיפים ניתנים לשינוי בכל שלב מאוחר יותר</p>
+      <form id="couple-form">
+        <div class="two-col">
+          <div>
+            <label for="groom_name">שם החתן</label>
+            <input type="text" id="groom_name" required>
+          </div>
+          <div>
+            <label for="bride_name">שם הכלה</label>
+            <input type="text" id="bride_name" required>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="media-slot">
+          <span class="media-slot-name">תמונת חתן</span>
+          <input type="file" accept="image/*" data-slot="groom_photo">
+        </div>
+        <div class="media-slot">
+          <span class="media-slot-name">תמונת כלה</span>
+          <input type="file" accept="image/*" data-slot="bride_photo">
+        </div>
+        <div class="media-slot">
+          <span class="media-slot-name">גיף אישור הגעה</span>
+          <input type="file" accept="image/gif,image/*" data-slot="approval_gif">
+        </div>
+        <div class="media-slot">
+          <span class="media-slot-name">גיף אי הגעה</span>
+          <input type="file" accept="image/gif,image/*" data-slot="decline_gif">
+        </div>
+
+        <div class="actions">
+          <button type="submit">המשך לרשימת מוזמנים</button>
+        </div>
+        <div id="step-1-status" class="status-msg"></div>
+      </form>
+    </div>
+
+    <div class="card" id="step-2" style="display:none;">
+      <h1>רשימת מוזמנים</h1>
+      <p class="subtitle">אפשר להוסיף עכשיו או לדלג ולהוסיף מאוחר יותר מעמוד הניהול</p>
+
+      <label for="single-name">הוספת מוזמן בודד</label>
+      <div class="two-col">
+        <input type="text" id="single-name" placeholder="שם">
+        <input type="text" id="single-phone" placeholder="טלפון" dir="ltr">
+      </div>
+      <button type="button" id="add-single-btn" class="secondary">הוספה</button>
+
+      <hr class="divider">
+
+      <label for="bulk-import-text">ייבוא מרובה (שורה לכל מוזמן: שם,טלפון,מספר צפויים)</label>
+      <textarea id="bulk-import-text" placeholder="דנה כהן,0501234567,2&#10;יוסי לוי,0507654321,1"></textarea>
+      <button type="button" id="bulk-import-btn" class="secondary">ייבוא טקסט</button>
+
+      <hr class="divider">
+
+      <label for="file-import">או העלאת קובץ CSV / XLSX</label>
+      <p class="file-format-hint">
+        הקובץ צריך לכלול שלוש עמודות: <code>name</code> (שם), <code>phone</code> (טלפון) ו-<code>expected_guest</code>
+        (מספר צפוי, אופציונלי – ברירת מחדל 1). שורת הכותרות חייבת להיות באנגלית בדיוק כמו בדוגמה.
+        <a href="/assets/guest-template.csv" download>הורדת קובץ לדוגמה למילוי</a>
+      </p>
+      <input type="file" id="file-import" accept=".csv,.xlsx">
+
+      <div id="guest-count" class="guest-count">0 מוזמנים ברשימה</div>
+      <div id="step-2-status" class="status-msg"></div>
+
+      <div class="actions">
+        <button type="button" id="finish-btn">סיום</button>
+        <button type="button" class="skip-link" id="skip-btn">דלג לעת עתה</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showStatus(el, message, isSuccess) {
+      el.textContent = message;
+      el.className = `status-msg ${isSuccess ? 'success' : 'error'}`;
+    }
+
+    document.getElementById('couple-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const statusEl = document.getElementById('step-1-status');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+
+      try {
+        const configRes = await fetch('/api/admin/config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            couple_name_1: document.getElementById('groom_name').value.trim(),
+            couple_name_2: document.getElementById('bride_name').value.trim(),
+          }),
+        });
+
+        if (!configRes.ok) {
+          showStatus(statusEl, 'שגיאה בשמירת פרטי הזוג', false);
+          return;
+        }
+
+        const fileInputs = document.querySelectorAll('#step-1 input[type="file"]');
+        for (const input of fileInputs) {
+          if (!input.files[0]) continue;
+          const formData = new FormData();
+          formData.append('file', input.files[0]);
+          const uploadRes = await fetch(`/api/admin/media/${input.dataset.slot}`, { method: 'PUT', body: formData });
+          if (!uploadRes.ok) {
+            showStatus(statusEl, `שגיאה בהעלאת קובץ עבור ${input.dataset.slot}`, false);
+            return;
+          }
+        }
+
+        document.getElementById('step-1').style.display = 'none';
+        document.getElementById('step-2').style.display = 'block';
+        document.getElementById('dot-1').classList.remove('active');
+        document.getElementById('dot-2').classList.add('active');
+        refreshGuestCount();
+      } catch (err) {
+        showStatus(statusEl, 'שגיאת רשת, נסו שוב', false);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    async function refreshGuestCount() {
+      const res = await fetch('/api/invited-guests');
+      const guests = res.ok ? await res.json() : [];
+      document.getElementById('guest-count').textContent = `${guests.length} מוזמנים ברשימה`;
+    }
+
+    document.getElementById('add-single-btn').addEventListener('click', async () => {
+      const statusEl = document.getElementById('step-2-status');
+      const name = document.getElementById('single-name').value.trim();
+      const phone = document.getElementById('single-phone').value.trim();
+      if (!name || !phone) {
+        showStatus(statusEl, 'יש למלא שם וטלפון', false);
+        return;
+      }
+
+      const res = await fetch('/api/invited-guests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, expected_guest: 1 }),
+      });
+
+      if (res.ok) {
+        showStatus(statusEl, 'המוזמן נוסף בהצלחה', true);
+        document.getElementById('single-name').value = '';
+        document.getElementById('single-phone').value = '';
+        await refreshGuestCount();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showStatus(statusEl, data.error || 'שגיאה בהוספת מוזמן', false);
+      }
+    });
+
+    document.getElementById('bulk-import-btn').addEventListener('click', async () => {
+      const statusEl = document.getElementById('step-2-status');
+      const text = document.getElementById('bulk-import-text').value;
+      if (!text.trim()) return;
+
+      const res = await fetch('/api/invited-guests/bulk-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        showStatus(statusEl, `יובאו ${result.imported} מוזמנים${result.errors.length ? `, ${result.errors.length} שגיאות` : ''}`, result.errors.length === 0);
+        document.getElementById('bulk-import-text').value = '';
+        await refreshGuestCount();
+      } else {
+        showStatus(statusEl, 'שגיאה בייבוא', false);
+      }
+    });
+
+    document.getElementById('file-import').addEventListener('change', async (e) => {
+      const statusEl = document.getElementById('step-2-status');
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/invited-guests/upload', { method: 'POST', body: formData });
+      if (res.ok) {
+        const result = await res.json();
+        showStatus(statusEl, `יובאו ${result.imported} מוזמנים מהקובץ${result.errors.length ? `, ${result.errors.length} שגיאות` : ''}`, result.errors.length === 0);
+        await refreshGuestCount();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showStatus(statusEl, data.error || 'שגיאה בהעלאת הקובץ', false);
+      }
+      e.target.value = '';
+    });
+
+    document.getElementById('finish-btn').addEventListener('click', () => {
+      window.location.href = '/admin/';
+    });
+
+    document.getElementById('skip-btn').addEventListener('click', () => {
+      window.location.href = '/admin/';
+    });
+  </script>
+</body>
+</html>

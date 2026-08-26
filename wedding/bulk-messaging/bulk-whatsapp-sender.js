@@ -1,24 +1,32 @@
+require('dotenv').config();
 const twilio = require('twilio');
 const fs = require('fs');
 const readline = require('readline');
 
-// Configuration
+function readMessageTemplate() {
+    try {
+        return fs.readFileSync('message-template.txt', 'utf8');
+    } catch (error) {
+        return '';
+    }
+}
+
+// Configuration - set these in .env (see .env.example)
 const config = {
-    accountSid: 'YOUR_TWILIO_ACCOUNT_SID',
-    authToken: 'YOUR_TWILIO_AUTH_TOKEN',
-    fromNumber: 'whatsapp:+14155238886', // Your Twilio WhatsApp number
-    baseUrl: 'https://ephemeral-douhua-685e37.netlify.app/',
-    messageTemplate: `היי! 
-
-אנחנו שמחים להזמין אותך לחתונה שלנו!
-
-לחץ על הקישור הבא כדי לאשר את הגעתך:
-{link}
-
-נשמח לראותך!
-
-איה ועידו`
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    fromNumber: process.env.TWILIO_FROM_NUMBER ? `whatsapp:${process.env.TWILIO_FROM_NUMBER}` : undefined,
+    baseUrl: process.env.WHATSAPP_BASE_URL,
+    countryCode: process.env.WHATSAPP_COUNTRY_CODE,
+    messageTemplate: readMessageTemplate(),
 };
+
+for (const [key, value] of Object.entries(config)) {
+    if (!value) {
+        console.error(`❌ Missing required config: ${key}. Copy .env.example to .env and message-template.example.txt to message-template.txt, then fill them in.`);
+        process.exit(1);
+    }
+}
 
 // Initialize Twilio client
 const client = twilio(config.accountSid, config.authToken);
@@ -29,7 +37,7 @@ async function sendWhatsAppMessage(toPhone, message) {
         const result = await client.messages.create({
             body: message,
             from: config.fromNumber,
-            to: `whatsapp:+972${toPhone.replace(/^0/, '')}` // Convert Israeli format
+            to: `whatsapp:+${config.countryCode}${toPhone.replace(/^0/, '')}` // Strip leading 0, prepend country code
         });
         
         console.log(`✅ Message sent to ${toPhone}: ${result.sid}`);
@@ -110,7 +118,7 @@ function saveResults(results, filename = 'bulk-send-results.json') {
 
 // Main execution
 async function main() {
-    console.log('🎉 Bulk WhatsApp Sender - איה ועידו');
+    console.log('🎉 Bulk WhatsApp Sender');
     console.log('=====================================\n');
     
     // Check if phone numbers file exists
