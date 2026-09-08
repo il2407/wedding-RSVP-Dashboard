@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS invited_guests (
   phone TEXT NOT NULL,
   name TEXT NOT NULL,
   expected_guest INTEGER NOT NULL DEFAULT 1,
+  do_not_send INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
@@ -42,6 +43,8 @@ CREATE TABLE IF NOT EXISTS rsvps (
   user_id INTEGER NOT NULL REFERENCES users(id),
   phone TEXT NOT NULL,
   guests INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'attending',
+  source TEXT NOT NULL DEFAULT 'guest',
   timestamp TEXT NOT NULL
 );
 
@@ -71,3 +74,27 @@ CREATE TABLE IF NOT EXISTS media (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_media_user_slot ON media(user_id, slot);
+
+CREATE TABLE IF NOT EXISTS whatsapp_jobs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  message_template TEXT NOT NULL,
+  scheduled_at TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_whatsapp_jobs_due ON whatsapp_jobs(status, scheduled_at);
+
+CREATE TABLE IF NOT EXISTS whatsapp_job_recipients (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  job_id INTEGER NOT NULL REFERENCES whatsapp_jobs(id),
+  phone TEXT NOT NULL,
+  name TEXT NOT NULL DEFAULT '',
+  message TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  error TEXT,
+  sent_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_whatsapp_job_recipients_job ON whatsapp_job_recipients(job_id);

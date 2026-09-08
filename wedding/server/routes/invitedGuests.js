@@ -52,14 +52,14 @@ router.get('/invited-guests', requireAuth, (req, res) => {
 });
 
 router.post('/invited-guests', requireAuth, (req, res) => {
-  const { phone, name, expected_guest } = req.body;
+  const { phone, name, expected_guest, do_not_send } = req.body;
   if (!phone || !name) return res.status(400).json({ error: 'phone and name are required' });
 
   const now = new Date().toISOString();
   try {
     db.prepare(
-      'INSERT INTO invited_guests (user_id, phone, name, expected_guest, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
-    ).run(req.userId, phone, name, expected_guest ?? 1, now, now);
+      'INSERT INTO invited_guests (user_id, phone, name, expected_guest, do_not_send, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).run(req.userId, phone, name, expected_guest ?? 1, do_not_send ? 1 : 0, now, now);
   } catch (err) {
     return res.status(409).json({ error: 'Phone already exists' });
   }
@@ -72,10 +72,17 @@ router.put('/invited-guests/:phone', requireAuth, (req, res) => {
     .get(req.userId, req.params.phone);
   if (!existing) return res.status(404).json({ error: 'Not found' });
 
-  const { name, expected_guest } = req.body;
+  const { name, expected_guest, do_not_send } = req.body;
   db.prepare(
-    'UPDATE invited_guests SET name = ?, expected_guest = ?, updated_at = ? WHERE user_id = ? AND phone = ?'
-  ).run(name ?? existing.name, expected_guest ?? existing.expected_guest, new Date().toISOString(), req.userId, req.params.phone);
+    'UPDATE invited_guests SET name = ?, expected_guest = ?, do_not_send = ?, updated_at = ? WHERE user_id = ? AND phone = ?'
+  ).run(
+    name ?? existing.name,
+    expected_guest ?? existing.expected_guest,
+    do_not_send === undefined ? existing.do_not_send : (do_not_send ? 1 : 0),
+    new Date().toISOString(),
+    req.userId,
+    req.params.phone
+  );
 
   res.json(db.prepare('SELECT * FROM invited_guests WHERE user_id = ? AND phone = ?').get(req.userId, req.params.phone));
 });
@@ -153,8 +160,11 @@ async function parseXlsxBuffer(buffer) {
 }
 
 function parseCsvBuffer(buffer) {
-  return buffer
-    .toString('utf8')
+  // Strip a UTF-8 BOM if present (common in CSVs exported from Excel) so it doesn't get
+  // stuck onto the first header/cell and break header matching or corrupt the first name.
+  let text = buffer.toString('utf8');
+  if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+  return text
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
@@ -180,4 +190,47 @@ router.post('/invited-guests/upload', requireAuth, (req, res) => {
   });
 });
 
+// Escapes a CSV field per RFC 4180: wraps in quotes and doubles any embedded quotes
+// whenever the value contains a comma, quote or line break.
+function csvField(value) {
+  const str = value === null || value === undefined ? '' : String(value);
+  if (/[",\n\r]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+  return str;
+}
+
+router.get('/invited-guests/export', requireAuth, (req, res) => {
+  const guests = db
+    .prepare('SELECT * FROM invited_guests WHERE user_id = ? ORDER BY name').all(req.userId);
+  const rsvpByPhone = new Map(
+    db.prepare('SELECT * FROM rsvps WHERE user_id = ?').all(req.userId).map((r) => [r.phone, r])
+  );
+  const settings = db.prepare('SELECT couple_name_1, couple_name_2 FROM settings WHERE user_id = ?').get(req.userId);
+
+  const headers = [
+    'שם', 'טלפון', 'סטטוס הזמנה', 'סטטוס אישור הגעה', 'מספר מגיעים', 'לשלוח הודעות', 'תאריך תגובה',
+  ];
+  const rows = guests.map((g) => {
+    const rsvp = rsvpByPhone.get(g.phone);
+    const invitationStatus = rsvp ? 'ענה' : 'טרם ענה';
+    const rsvpStatus = !rsvp ? 'טרם ענה' : rsvp.status === 'attending' ? 'מגיע' : 'לא מגיע';
+    const attendeeCount = rsvp && rsvp.status === 'attending' ? rsvp.guests : 0;
+    const sendMessages = g.do_not_send ? 'לא' : 'כן';
+    const responseDate = rsvp ? rsvp.timestamp : '';
+    return [g.name, `="${g.phone}"`, invitationStatus, rsvpStatus, attendeeCount, sendMessages, responseDate];
+  });
+
+  const lines = [headers, ...rows].map((row) => row.map(csvField).join(',')).join('\r\n');
+  const BOM = '﻿'; // so Excel opens the file as UTF-8 instead of mangling Hebrew text
+  const csv = BOM + lines;
+
+  const weddingName = [settings?.couple_name_1, settings?.couple_name_2].filter(Boolean).join('-') || 'guests';
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const filename = `${weddingName}-${dateStr}.csv`.replace(/[^\w\-.]/g, '_');
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(csv);
+});
+
 module.exports = router;
+module.exports.csvField = csvField;

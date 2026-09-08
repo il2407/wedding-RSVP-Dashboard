@@ -561,6 +561,7 @@
     <div class="confirmation" id="confirmation"></div>
   </div>
   
+  <script src="/assets/hebrew-name-format.js"></script>
   <script>
     const form = document.getElementById('bus-form');
     const attendanceForm = document.getElementById('attendance-form');
@@ -632,8 +633,9 @@
         const config = await response.json();
 
         applyThemeColor(config.theme_color);
-        document.title = `${config.couple_name_1} ${config.couple_name_2} - הרשמה להסעה`;
-        document.getElementById('bus-subtitle').textContent = `החתונה של ${config.couple_name_1} ${config.couple_name_2}`;
+        const coupleNames = formatHebrewNameList([config.couple_name_1, config.couple_name_2]);
+        document.title = `${coupleNames} - הרשמה להסעה`;
+        document.getElementById('bus-subtitle').textContent = `החתונה של ${coupleNames}`;
         document.getElementById('bus-pickup-text').textContent = config.bus_pickup_location;
         document.getElementById('bus-destination-text').textContent = config.bus_destination_text;
         document.getElementById('bus-departure-text').textContent = config.bus_departure_time;

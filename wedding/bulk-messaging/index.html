@@ -250,8 +250,30 @@
         <button id="next-chat-btn" class="send-btn" style="display: none; background: linear-gradient(135deg, #059669, #047857);" onclick="openNextChat()">
             ➡️ Next Chat
         </button>
+
+        <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e2e8f0;">
+
+        <div class="form-group">
+            <h2 style="color: #ea580c; font-size: 1.3rem; margin-bottom: 0.5rem;">🚀 Automated Send (Twilio API)</h2>
+            <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1rem;">
+                Sends automatically through Twilio's WhatsApp API using the message template and phone numbers above
+                (no manual clicking). Add <code>{name}</code> to the template to personalize with each guest's name.
+                Leave the date/time blank to send immediately.
+            </p>
+            <label for="schedule-datetime">Send at (leave blank to send now):</label>
+            <input type="datetime-local" id="schedule-datetime">
+            <button class="send-btn" id="schedule-send-btn" style="background: linear-gradient(135deg, #059669, #047857);" onclick="scheduleAutomatedSend()">
+                📅 Schedule / Send via Twilio
+            </button>
+        </div>
+
+        <div id="jobs-container">
+            <h3 style="color: #ea580c; margin-bottom: 0.5rem; font-size: 1rem;">Automated Send History</h3>
+            <div id="jobs-list" style="font-size: 0.9rem;"></div>
+        </div>
     </div>
 
+    <script src="/assets/hebrew-name-format.js"></script>
     <script>
         let currentUserId = null;
         let countryCode = '';
@@ -297,7 +319,7 @@
                 if (!res.ok) return;
                 const config = await res.json();
 
-                const title = `Bulk WhatsApp Sender - ${config.couple_name_1} ${config.couple_name_2}`;
+                const title = `Bulk WhatsApp Sender - ${formatHebrewNameList([config.couple_name_1, config.couple_name_2])}`;
                 document.title = title;
                 document.getElementById('page-title').textContent = title;
                 document.getElementById('message-template').value = config.whatsapp_message_template || '';
@@ -323,6 +345,10 @@
                     return;
                 }
                 let guests = await res.json();
+
+                // Mirrors the server-side filtering in buildRecipients() so the count shown
+                // here always matches who will actually receive the send.
+                guests = guests.filter(g => !g.do_not_send);
 
                 if (document.getElementById('unresponded-only-checkbox').checked) {
                     const rsvpRes = await fetch('/api/rsvps');
@@ -597,6 +623,91 @@
             statusDiv.className = `status ${type}`;
             statusDiv.textContent = message;
         }
+
+        async function scheduleAutomatedSend() {
+            const template = document.getElementById('message-template').value;
+            const phoneNumbers = document.getElementById('phone-numbers').value.split('\n').map(p => p.trim()).filter(Boolean);
+            const scheduledAtLocal = document.getElementById('schedule-datetime').value;
+
+            if (!template || phoneNumbers.length === 0) {
+                showStatus('Please fill in both message template and phone numbers.', 'error');
+                return;
+            }
+
+            const scheduleBtn = document.getElementById('schedule-send-btn');
+            scheduleBtn.disabled = true;
+
+            const unrespondedOnly = document.getElementById('unresponded-only-checkbox').checked;
+
+            try {
+                const res = await fetch('/api/admin/whatsapp/jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message_template: template,
+                        phones: phoneNumbers,
+                        scheduled_at: scheduledAtLocal ? new Date(scheduledAtLocal).toISOString() : undefined,
+                        unresponded_only: unrespondedOnly,
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    showStatus(data.error || 'Could not schedule the send.', 'error');
+                    return;
+                }
+                // The server re-filters phones (excluding do-not-send and, if requested,
+                // already-responded guests), so report the actual recipient count it used.
+                const actualCount = data.total ?? phoneNumbers.length;
+                showStatus(
+                    scheduledAtLocal
+                        ? `Scheduled ${actualCount} message(s) for ${new Date(scheduledAtLocal).toLocaleString()}.`
+                        : `Sending ${actualCount} message(s) now via Twilio...`,
+                    'success'
+                );
+                loadJobs();
+            } catch (error) {
+                console.error('Error scheduling send:', error);
+                showStatus('Could not reach the server to schedule the send.', 'error');
+            } finally {
+                scheduleBtn.disabled = false;
+            }
+        }
+
+        function jobStatusLabel(job) {
+            if (job.status === 'cancelled') return 'Cancelled';
+            if (job.status === 'completed') return `Completed — ${job.sent || 0} sent, ${job.failed || 0} failed`;
+            if (job.status === 'sending') return `Sending… ${(job.sent || 0) + (job.failed || 0)}/${job.total} done`;
+            return `Scheduled for ${new Date(job.scheduled_at).toLocaleString()}`;
+        }
+
+        async function loadJobs() {
+            try {
+                const res = await fetch('/api/admin/whatsapp/jobs');
+                if (!res.ok) return;
+                const jobs = await res.json();
+                const list = document.getElementById('jobs-list');
+                if (jobs.length === 0) {
+                    list.innerHTML = '<p style="color:#6b7280;">No automated sends yet.</p>';
+                    return;
+                }
+                list.innerHTML = jobs.map(job => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.8rem; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:0.5rem;">
+                        <div><strong>${job.total} recipient(s)</strong> — ${jobStatusLabel(job)}</div>
+                        ${job.status === 'pending' ? `<button class="secondary-btn" onclick="cancelJob(${job.id})">Cancel</button>` : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading jobs:', error);
+            }
+        }
+
+        async function cancelJob(id) {
+            await fetch(`/api/admin/whatsapp/jobs/${id}`, { method: 'DELETE' });
+            loadJobs();
+        }
+
+        loadJobs();
+        setInterval(loadJobs, 10000);
     </script>
 </body>
 </html> 

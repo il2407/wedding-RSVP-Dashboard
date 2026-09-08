@@ -715,6 +715,7 @@
       <img id="photo-image" src="" alt="תמונה" style="display:none;">
     </div>
   </div>
+  <script src="/assets/hebrew-name-format.js"></script>
   <script>
     const form = document.getElementById('rsvp-form');
     const confirmation = document.getElementById('confirmation');
@@ -825,8 +826,9 @@
         const config = await response.json();
 
         applyThemeColor(config.theme_color);
-        document.title = `${config.couple_name_1} ${config.couple_name_2} - אישור הגעה לחתונה`;
-        document.getElementById('couple-names').textContent = `${config.couple_name_1} ${config.couple_name_2}`;
+        const coupleNames = formatHebrewNameList([config.couple_name_1, config.couple_name_2]);
+        document.title = `${coupleNames} - אישור הגעה לחתונה`;
+        document.getElementById('couple-names').textContent = coupleNames;
         document.getElementById('wedding-date-text').textContent = config.wedding_date;
         document.getElementById('wedding-time-text').textContent = config.wedding_time;
         document.getElementById('venue-text').textContent = config.venue_name;

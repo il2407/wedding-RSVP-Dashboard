@@ -441,23 +441,31 @@
     
     <div class="stats" id="stats-section">
       <div class="stat-box">
-        <span class="stat-label">סה״כ מוזמנים</span>
+        <span class="stat-label">סה״כ הזמנות שנשלחו</span>
         <span class="stat-value" id="total-invited">—</span>
       </div>
       <div class="stat-box">
-        <span class="stat-label">אישרו הגעה (סה״כ משתתפים)</span>
-        <span class="stat-value" id="approved">—</span>
+        <span class="stat-label">הזמנות שנענו</span>
+        <span class="stat-value" id="responded">—</span>
       </div>
       <div class="stat-box">
-        <span class="stat-label">טרם אישרו הגעה</span>
+        <span class="stat-label">הזמנות שטרם נענו</span>
         <span class="stat-value" id="not-approved">—</span>
       </div>
       <div class="stat-box">
-        <span class="stat-label">אחוז שטרם אישרו הגעה</span>
-        <span class="stat-value" id="not-approved-percent">—</span>
+        <span class="stat-label">סה״כ מגיעים (כולל נלווים)</span>
+        <span class="stat-value" id="approved">—</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">הודיעו שלא מגיעים</span>
+        <span class="stat-value" id="declined">—</span>
       </div>
     </div>
-    
+
+    <div class="form-group" style="margin-bottom:1rem;">
+      <button type="button" class="secondary-btn" id="export-csv-btn">⬇️ ייצוא רשימת מוזמנים ל-CSV</button>
+    </div>
+
     <div class="table-container" id="rsvp-table-container">
       <input type="text" id="rsvp-search" class="search-input" placeholder="חיפוש לפי שם או טלפון...">
       <table id="rsvp-table">
@@ -483,7 +491,8 @@
             <th>שם</th>
             <th>טלפון</th>
             <th>מוזמנים צפויים</th>
-            <th>סטטוס</th>
+            <th>סטטוס אישור הגעה</th>
+            <th>לשלוח הודעות</th>
           </tr>
         </thead>
         <tbody>
@@ -510,9 +519,8 @@
       </table>
     </div>
   </div>
+  <script src="/assets/hebrew-name-format.js"></script>
   <script>
-    let totalInvited = 0;
-
     // Small wrapper so an expired/cleared session bounces back to the login page
     // instead of silently rendering an empty dashboard.
     async function apiFetch(url, options) {
@@ -528,15 +536,20 @@
       const res = await apiFetch('/api/admin/config');
       if (!res.ok) return;
       const config = await res.json();
-      const title = `דשבורד אישורי הגעה - ${config.couple_name_1} ${config.couple_name_2}`;
+      const title = `דשבורד אישורי הגעה - ${formatHebrewNameList([config.couple_name_1, config.couple_name_2])}`;
       document.title = title;
       document.getElementById('page-title').textContent = title;
-      totalInvited = config.totalInvited;
     }
 
     async function fetchRSVPs() {
       const res = await apiFetch('/api/rsvps');
       if (!res.ok) return [];
+      return await res.json();
+    }
+
+    async function fetchStats() {
+      const res = await apiFetch('/api/rsvps/stats');
+      if (!res.ok) return null;
       return await res.json();
     }
 
@@ -564,15 +577,6 @@
     function showLoadingRow(tbodySelector, colSpan) {
       document.querySelector(tbodySelector).innerHTML =
         `<tr><td colspan="${colSpan}" class="loading-row">טוען...</td></tr>`;
-    }
-
-    function statusBadge(phone) {
-      const rsvp = rsvpByPhone[phone];
-      if (!rsvp) return '<span class="status-pending">טרם ענה</span>';
-      const guests = parseInt(rsvp.guests, 10) || 0;
-      return guests > 0
-        ? `<span class="status-yes">מגיע (${guests})</span>`
-        : '<span class="status-no">לא מגיע</span>';
     }
 
     function renderRsvpRows(rows) {
@@ -618,25 +622,23 @@
       renderRsvpRows(filterBySearch(rsvpRows, document.getElementById('rsvp-search').value));
     }
 
-    function renderStats(data) {
-      // Sum all guests
-      const approved = data.reduce((sum, row) => {
-        const guests = parseInt(row.guests, 10);
-        return sum + (isNaN(guests) ? 0 : guests);
-      }, 0);
-      const notApproved = Math.max(totalInvited - approved, 0);
-      const percentNotApproved = totalInvited > 0 ? ((notApproved / totalInvited) * 100).toFixed(1) : '0.0';
-      document.getElementById('approved').textContent = approved;
-      document.getElementById('total-invited').textContent = totalInvited;
-      document.getElementById('not-approved').textContent = notApproved;
-      document.getElementById('not-approved-percent').textContent = percentNotApproved + '%';
+    // Invitations sent vs. responded vs. unanswered are counted per invitation (never
+    // double-counted for multi-attendee RSVPs); confirmed attendees is the separate
+    // headcount total including plus-ones. Comes straight from GET /api/rsvps/stats.
+    function renderStats(stats) {
+      if (!stats) return;
+      document.getElementById('total-invited').textContent = stats.totalInvited;
+      document.getElementById('responded').textContent = stats.responded;
+      document.getElementById('not-approved').textContent = stats.unanswered;
+      document.getElementById('approved').textContent = stats.confirmedAttendees;
+      document.getElementById('declined').textContent = stats.declined;
     }
 
     async function loadDashboard() {
       showLoadingRow('#rsvp-table tbody', 4);
       const data = await fetchRSVPs();
       await renderTableWithNames(data);
-      renderStats(data);
+      renderStats(await fetchStats());
     }
 
     async function fetchInvited() {
@@ -645,10 +647,29 @@
       return await res.json();
     }
 
+    // Manual RSVP-status control: a select (unanswered/attending/declined) plus a guest-count
+    // input that only shows (and is only sent) when attending is selected.
+    function rsvpStatusControl(phone) {
+      const rsvp = rsvpByPhone[phone];
+      const status = rsvp ? rsvp.status : 'unanswered';
+      const guests = rsvp && rsvp.status === 'attending' ? rsvp.guests : 1;
+      const opt = (value, label) =>
+        `<option value="${value}"${status === value ? ' selected' : ''}>${label}</option>`;
+      return `
+        <select class="rsvp-status-select" data-phone="${phone}">
+          ${opt('unanswered', 'טרם ענה')}
+          ${opt('attending', 'מגיע')}
+          ${opt('declined', 'לא מגיע')}
+        </select>
+        <input type="number" min="1" class="rsvp-guests-input" data-phone="${phone}" value="${guests}"
+          style="width:3.5em;${status === 'attending' ? '' : 'display:none;'}">
+      `;
+    }
+
     function renderInvitedTable(rows) {
       const tbody = document.querySelector('#invited-table tbody');
       if (rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty-row">אין מוזמנים להצגה</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-row">אין מוזמנים להצגה</td></tr>';
         return;
       }
       tbody.innerHTML = '';
@@ -658,14 +679,17 @@
           <td>${row.name || ''}</td>
           <td>${row.phone || ''}</td>
           <td>${row.expected_guest || ''}</td>
-          <td>${statusBadge(row.phone)}</td>
+          <td>${rsvpStatusControl(row.phone)}</td>
+          <td style="text-align:center;">
+            <input type="checkbox" class="do-not-send-checkbox" data-phone="${row.phone}" ${row.do_not_send ? 'checked' : ''}>
+          </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
     async function loadInvitedTable() {
-      showLoadingRow('#invited-table tbody', 4);
+      showLoadingRow('#invited-table tbody', 5);
       invitedRows = await fetchInvited();
       if (Object.keys(rsvpByPhone).length === 0) {
         const rsvps = await fetchRSVPs();
@@ -673,6 +697,71 @@
       }
       renderInvitedTable(filterBySearch(invitedRows, document.getElementById('invited-search').value));
     }
+
+    // Manually sets a guest's RSVP status from the dashboard (issue #8). 'unanswered' clears
+    // any RSVP on file; 'attending'/'declined' upsert one tagged source='manual' server-side.
+    async function updateRsvpStatus(phone, status, guests) {
+      const res = await apiFetch(`/api/rsvps/${encodeURIComponent(phone)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, guests }),
+      });
+      if (!res.ok) {
+        alert('שגיאה בעדכון סטטוס אישור הגעה');
+        return;
+      }
+      if (status === 'unanswered') {
+        delete rsvpByPhone[phone];
+      } else {
+        rsvpByPhone[phone] = await res.json();
+      }
+      renderStats(await fetchStats());
+    }
+
+    // Toggles the per-guest "do not send" messaging flag, independent of RSVP status.
+    async function updateDoNotSend(phone, doNotSend) {
+      const res = await apiFetch(`/api/invited-guests/${encodeURIComponent(phone)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ do_not_send: doNotSend }),
+      });
+      if (!res.ok) {
+        alert('שגיאה בעדכון הגדרת שליחת הודעות');
+        return;
+      }
+      const updated = await res.json();
+      const idx = invitedRows.findIndex(r => r.phone === phone);
+      if (idx >= 0) invitedRows[idx] = updated;
+    }
+
+    // Single delegated listener so re-rendering the table (search filtering, reloads) never
+    // needs to re-attach per-row listeners.
+    document.querySelector('#invited-table tbody').addEventListener('change', async (e) => {
+      const target = e.target;
+      const phone = target.dataset.phone;
+      if (!phone) return;
+
+      if (target.classList.contains('rsvp-status-select')) {
+        const status = target.value;
+        const row = target.closest('tr');
+        const guestsInput = row.querySelector('.rsvp-guests-input');
+        guestsInput.style.display = status === 'attending' ? '' : 'none';
+        const guests = status === 'attending' ? (parseInt(guestsInput.value, 10) || 1) : undefined;
+        await updateRsvpStatus(phone, status, guests);
+      } else if (target.classList.contains('rsvp-guests-input')) {
+        const row = target.closest('tr');
+        const select = row.querySelector('.rsvp-status-select');
+        if (select.value === 'attending') {
+          await updateRsvpStatus(phone, 'attending', parseInt(target.value, 10) || 1);
+        }
+      } else if (target.classList.contains('do-not-send-checkbox')) {
+        await updateDoNotSend(phone, target.checked);
+      }
+    });
+
+    document.getElementById('export-csv-btn').addEventListener('click', () => {
+      window.location.href = '/api/invited-guests/export';
+    });
 
     async function fetchBusRegistrations() {
       const res = await apiFetch('/api/bus-registrations');

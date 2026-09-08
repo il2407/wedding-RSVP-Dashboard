@@ -2,7 +2,9 @@ const path = require('path');
 const fs = require('fs');
 const Database = require('better-sqlite3');
 
-const dataDir = path.join(__dirname, 'data');
+// Configurable so the SQLite file can live on a persistent disk/volume (e.g. Render's
+// persistent disk) instead of the app's own directory, which is wiped on every deploy.
+const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(__dirname, 'data');
 const uploadsDir = path.join(dataDir, 'uploads');
 fs.mkdirSync(uploadsDir, { recursive: true });
 
@@ -58,6 +60,34 @@ function migrateThemeColorColumn() {
 }
 
 migrateThemeColorColumn();
+
+// One-time upgrade adding distinct RSVP status/source tracking, so "responded" and
+// "confirmed attendees" can be computed separately instead of conflating invitation
+// counts with attendee headcounts. Existing rows (all guest-submitted, pre-dating this
+// column) are backfilled from their `guests` value: 0 means the guest declined, anything
+// else means they're attending.
+function migrateRsvpStatusColumns() {
+  if (!tableExists('rsvps')) return;
+  if (!columnExists('rsvps', 'status')) {
+    db.exec("ALTER TABLE rsvps ADD COLUMN status TEXT NOT NULL DEFAULT 'attending'");
+    db.exec("UPDATE rsvps SET status = CASE WHEN guests = 0 THEN 'declined' ELSE 'attending' END");
+  }
+  if (!columnExists('rsvps', 'source')) {
+    db.exec("ALTER TABLE rsvps ADD COLUMN source TEXT NOT NULL DEFAULT 'guest'");
+  }
+}
+
+migrateRsvpStatusColumns();
+
+// One-time upgrade adding a per-guest flag to skip them when sending bulk WhatsApp
+// invitations (e.g. close friends/family already known to be attending). Defaults to 0
+// (send as before) so existing guest records are unaffected.
+function migrateDoNotSendColumn() {
+  if (!tableExists('invited_guests') || columnExists('invited_guests', 'do_not_send')) return;
+  db.exec('ALTER TABLE invited_guests ADD COLUMN do_not_send INTEGER NOT NULL DEFAULT 0');
+}
+
+migrateDoNotSendColumn();
 
 const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 db.exec(schema);

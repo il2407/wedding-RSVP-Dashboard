@@ -4,7 +4,8 @@
   "description": "Backend for the generic wedding RSVP platform",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "node --test"
   },
   "license": "MIT",
   "dependencies": {
@@ -15,7 +16,8 @@
     "exceljs": "^4.4.0",
     "express": "^4.19.2",
     "google-auth-library": "^9.14.1",
-    "multer": "^2.2.0"
+    "multer": "^2.2.0",
+    "twilio": "^5.13.1"
   },
   "engines": {
     "node": "22.x"
