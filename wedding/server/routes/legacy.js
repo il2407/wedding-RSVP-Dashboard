@@ -62,8 +62,11 @@ router.post('/admin/claim-legacy-data', requireAuth, (req, res) => {
     }
 
     if (tableExists('rsvps_legacy')) {
+      // Legacy rows predate the status column, so backfill it the same way the in-place
+      // schema migration does: 0 guests means the guest declined, anything else attending.
       const { changes } = db.prepare(
-        `INSERT INTO rsvps (user_id, phone, guests, timestamp) SELECT ?, phone, guests, timestamp FROM rsvps_legacy`
+        `INSERT INTO rsvps (user_id, phone, guests, status, timestamp)
+         SELECT ?, phone, guests, CASE WHEN guests = 0 THEN 'declined' ELSE 'attending' END, timestamp FROM rsvps_legacy`
       ).run(userId);
       summary.rsvpsClaimed = changes;
       db.exec('DROP TABLE rsvps_legacy');

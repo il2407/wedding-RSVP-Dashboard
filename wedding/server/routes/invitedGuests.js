@@ -7,6 +7,36 @@ const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
+// Splits one line on commas per RFC 4180: a comma inside a "quoted" field doesn't split
+// the line, and "" inside a quoted field is an escaped literal quote.
+function splitCsvLine(line) {
+  const fields = [];
+  let field = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    if (inQuotes) {
+      if (char === '"' && line[i + 1] === '"') {
+        field += '"';
+        i += 1;
+      } else if (char === '"') {
+        inQuotes = false;
+      } else {
+        field += char;
+      }
+    } else if (char === '"' && field === '') {
+      inQuotes = true;
+    } else if (char === ',') {
+      fields.push(field);
+      field = '';
+    } else {
+      field += char;
+    }
+  }
+  fields.push(field);
+  return fields;
+}
+
 function upsertGuests(userId, rows) {
   const now = new Date().toISOString();
   const upsert = db.prepare(
@@ -101,7 +131,7 @@ router.post('/invited-guests/bulk-import', requireAuth, (req, res) => {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const [name, phone, expected_guest] = line.split(',').map((part) => part.trim());
+      const [name, phone, expected_guest] = splitCsvLine(line).map((part) => part.trim());
       return { name, phone, expected_guest };
     });
 
@@ -168,7 +198,7 @@ function parseCsvBuffer(buffer) {
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => line.split(','));
+    .map((line) => splitCsvLine(line));
 }
 
 router.post('/invited-guests/upload', requireAuth, (req, res) => {
