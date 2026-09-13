@@ -4,632 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>אישור הגעה לחתונה</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
-    /* Overridden per-tenant via JS from the couple's chosen theme color (see applyThemeColor) */
-    :root {
-      --primary: #f97316;
-      --primary-dark: #ea580c;
-      --primary-rgb: 249, 115, 22;
-      --primary-dark-rgb: 234, 88, 12;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Heebo', Arial, sans-serif;
-      background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 25%, #fdba74 50%, #fb923c 75%, var(--primary) 100%);
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow-x: hidden;
-    }
-    
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: 
-        radial-gradient(circle at 20% 80%, rgba(251, 146, 60, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(var(--primary-rgb), 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(245, 101, 101, 0.1) 0%, transparent 50%);
-      pointer-events: none;
-      z-index: -1;
-    }
-    
-    .container {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border-radius: 32px;
-      box-shadow: 
-        0 20px 60px rgba(var(--primary-rgb), 0.15),
-        0 8px 32px rgba(251, 146, 60, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
-      padding: 3rem 2.5rem 2.5rem 2.5rem;
-      max-width: 480px;
-      width: 100%;
-      text-align: center;
-      direction: rtl;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .container::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--primary), var(--primary-dark), #dc2626, var(--primary));
-      background-size: 400% 100%;
-      animation: shimmer 3s ease-in-out infinite;
-    }
-    
-    @keyframes shimmer {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-    }
-    
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-    
-    @keyframes tilt {
-      0%, 100% { transform: rotate(-5deg); }
-      50% { transform: rotate(5deg); }
-    }
-    
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-    
-    @keyframes slideInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    @keyframes bounce {
-      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-      40% { transform: translateY(-10px); }
-      60% { transform: translateY(-5px); }
-    }
-    
-    @keyframes rotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    
-    .wedding-header {
-      margin-bottom: 2.5rem;
-      position: relative;
-      animation: slideInUp 0.8s ease-out;
-    }
-    
-    .wedding-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 2.5rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark), #dc2626);
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 0.5rem;
-      letter-spacing: -0.5px;
-      line-height: 1.2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.2rem;
-    }
-    
-    .wedding-sticker {
-      width: 100px;
-      height: 100px;
-      object-fit: contain;
-      animation: tilt 1s ease-in-out infinite;
-      filter: drop-shadow(0 4px 8px rgba(var(--primary-rgb), 0.3));
-    }
-    
-    .wedding-subtitle {
-      font-size: 1.1rem;
-      color: #6b7280;
-      font-weight: 400;
-      margin-bottom: 1rem;
-    }
-    
-    .wedding-date {
-      display: inline-block;
-      background: linear-gradient(135deg, #fed7aa, #fdba74);
-      color: var(--primary-dark);
-      padding: 0.5rem 1.5rem;
-      border-radius: 50px;
-      font-weight: 600;
-      font-size: 1rem;
-      border: 1px solid rgba(var(--primary-dark-rgb), 0.2);
-      margin-bottom: -2rem;
-      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.2);
-      animation: slideInUp 0.8s ease-out 0.2s both;
-    }
-    
-    .wedding-date a {
-      color: var(--primary-dark);
-      text-decoration: none;
-      font-weight: 600;
-      border-bottom: 1px solid rgba(var(--primary-dark-rgb), 0.3);
-      transition: all 0.3s ease;
-      display: inline-block;
-      margin-top: 0.3rem;
-    }
-    
-    .wedding-date a:hover {
-      color: #dc2626;
-      border-bottom-color: #dc2626;
-      transform: translateY(-1px);
-      text-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
-    }
-    
-    .personalized-greeting {
-      background: linear-gradient(135deg, #fef3c7, #fde68a);
-      color: #92400e;
-      font-size: 1.3rem;
-      font-weight: 600;
-      text-align: center;
-      margin-bottom: 2rem;
-      padding: 1rem 1.5rem;
-      border-radius: 16px;
-      border: 1px solid rgba(251, 191, 36, 0.3);
-      box-shadow: 0 4px 12px rgba(251, 191, 36, 0.15);
-      position: relative;
-      overflow: hidden;
-      animation: slideInUp 0.8s ease-out 0.4s both;
-    }
-    
-    /* Removed animated star emoji before personalized greeting */
-    
-    .invite-message {
-      color: #4b5563;
-      font-size: 1.15rem;
-      font-weight: 400;
-      line-height: 1.7;
-      margin-bottom: 2rem;
-      text-align: center;
-      animation: slideInUp 0.8s ease-out 1.2s both;
-    }
-    
-    .form-container {
-      background: rgba(255, 255, 255, 0.7);
-      border-radius: 20px;
-      padding: 2rem;
-      border: 1px solid rgba(var(--primary-rgb), 0.1);
-      backdrop-filter: blur(10px);
-      animation: slideInUp 0.8s ease-out 1.4s both;
-      transition: all 0.3s ease;
-    }
-    
-    .form-container:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 15px 35px rgba(var(--primary-rgb), 0.15);
-    }
-    
-    label {
-      display: block;
-      margin-bottom: 0.8rem;
-      font-weight: 600;
-      color: var(--primary-dark);
-      font-size: 1.1rem;
-      text-align: right;
-      animation: slideInUp 0.8s ease-out 1.6s both;
-    }
-    
-    input[type="number"] {
-      width: 100%;
-      padding: 1rem 1.2rem;
-      margin-bottom: 2rem;
-      border: 2px solid rgba(var(--primary-rgb), 0.2);
-      border-radius: 16px;
-      font-size: 1.1rem;
-      background: rgba(255, 255, 255, 0.9);
-      transition: all 0.3s ease;
-      direction: rtl;
-      font-weight: 500;
-      animation: slideInUp 0.8s ease-out 1.2s both;
-    }
-    
-    input[type="number"]:focus {
-      outline: none;
-      border-color: var(--primary);
-      background: #fff;
-      box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
-      transform: translateY(-2px) scale(1.02);
-    }
-    
-    select {
-      width: 100%;
-      padding: 1rem 1.2rem;
-      margin-bottom: 2rem;
-      border: 2px solid rgba(var(--primary-rgb), 0.2);
-      border-radius: 16px;
-      font-size: 1.1rem;
-      background: rgba(255, 255, 255, 0.9);
-      transition: all 0.3s ease;
-      direction: rtl;
-      font-weight: 500;
-      animation: slideInUp 0.8s ease-out 1.8s both;
-      cursor: pointer;
-    }
-    
-    select:focus {
-      outline: none;
-      border-color: var(--primary);
-      background: #fff;
-      box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
-      transform: translateY(-2px) scale(1.02);
-    }
-    
-    select option {
-      padding: 0.5rem;
-      font-size: 1rem;
-      background: #fff;
-      color: #374151;
-    }
-    
-    button {
-      width: 100%;
-      padding: 1.2rem 0;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: #fff;
-      font-size: 1.3rem;
-      font-weight: 700;
-      border: none;
-      border-radius: 16px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.3);
-      position: relative;
-      overflow: hidden;
-      letter-spacing: 0.5px;
-      animation: slideInUp 0.8s ease-out 2.0s both;
-    }
-    
-    button::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      transition: left 0.5s;
-    }
-    
-    button:hover::before {
-      left: 100%;
-    }
-    
-    button:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 12px 32px rgba(var(--primary-rgb), 0.4);
-    }
-    
-    button:active {
-      transform: translateY(-1px) scale(0.98);
-    }
-    
-    button:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
-      transform: none;
-    }
-    
-    .confirmation {
-      text-align: center;
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin-top: 2rem;
-      min-height: 3rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 12px;
-      transition: all 0.3s ease;
-      animation: slideInUp 0.8s ease-out 2.2s both;
-    }
-    
-    .confirmation.success {
-      color: #059669;
-      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-      border: 1px solid rgba(5, 150, 105, 0.2);
-      animation: bounce 0.6s ease-out;
-    }
-    
-    .confirmation.error {
-      color: #dc2626;
-      background: linear-gradient(135deg, #fee2e2, #fecaca);
-      border: 1px solid rgba(220, 38, 38, 0.2);
-      animation: bounce 0.6s ease-out;
-    }
-    
-    .modal-backdrop {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      /* Show immediately without animation */
-      animation: none;
-    }
-    
-    .modal-backdrop.styled {
-      animation: fadeIn 0.3s ease-out;
-    }
-    
-    .modal-content {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-      padding: 2.5rem 2rem 2rem 2rem;
-      max-width: 380px;
-      width: 90vw;
-      text-align: center;
-      direction: rtl;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      /* Show immediately without animation */
-      animation: none;
-    }
-    
-    .modal-content.styled {
-      animation: zoomInBounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .modal-content.styled::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--primary), var(--primary-dark), #dc2626, var(--primary));
-      background-size: 400% 100%;
-      animation: shimmer 2s ease-in-out infinite;
-    }
-    
-    
-    @keyframes zoomInBounce {
-      0% {
-        transform: scale(0.3) rotate(-10deg);
-        opacity: 0;
-      }
-      50% {
-        transform: scale(1.1) rotate(2deg);
-        opacity: 0.8;
-      }
-      70% {
-        transform: scale(0.95) rotate(-1deg);
-        opacity: 0.9;
-      }
-      100% {
-        transform: scale(1) rotate(0deg);
-        opacity: 1;
-      }
-    }
-    
-    #modal-message {
-      color: #374151;
-      font-size: 1.2rem;
-      margin-bottom: 2rem;
-      line-height: 1.6;
-      font-weight: 500;
-    }
-    
-    .modal-actions {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-    }
-    
-    .modal-btn {
-      padding: 0.8rem 1.5rem;
-      border-radius: 12px;
-      border: none;
-      font-size: 1.1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      min-width: 100px;
-      /* Override global button animation so these show immediately */
-      animation: none !important;
-    }
-    
-    .modal-btn.update {
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
-    }
-    
-    .modal-btn.cancel {
-      background: rgba(255, 255, 255, 0.9);
-      color: #6b7280;
-      border: 1px solid rgba(107, 114, 128, 0.2);
-    }
-    
-    .modal-btn:hover {
-      transform: translateY(-2px) scale(1.05);
-    }
-    
-    .photo-modal-backdrop {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(12px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      /* Show immediately without animation */
-      opacity: 1;
-      animation: none;
-    }
-    
-    .photo-modal-content {
-      background: #000;
-      border-radius: 32px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      padding: 12px;
-      width: 300px;
-      height: 540px;
-      text-align: center;
-      direction: rtl;
-      position: relative;
-      border: 3px solid #333;
-      box-shadow: 0 0 30px rgba(0,0,0,0.7);
-      /* Show immediately without animation */
-      transform: none;
-      animation: none;
-    }
-    
-    .photo-modal-content::before {
-      content: '';
-      position: absolute;
-      top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 70px;
-      height: 8px;
-      background: #333;
-      border-radius: 4px;
-      z-index: 1;
-    }
-    
-    .photo-modal-content img,
-    .photo-modal-content video {
-      width: 100%;
-      height: 100%;
-      border-radius: 24px;
-      object-fit: cover;
-      display: block;
-      animation: pulse 2s ease-in-out infinite;
-    }
-    
-    .photo-close-btn {
-      position: absolute;
-      top: -18px;
-      right: -18px;
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      font-size: 20px;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.4);
-      z-index: 2;
-      transition: all 0.3s ease;
-      animation: float 2s ease-in-out infinite;
-    }
-    
-    .photo-close-btn:hover {
-      transform: scale(1.1) rotate(90deg);
-      box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.5);
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    @keyframes zoomIn {
-      from {
-        transform: scale(0.3) rotate(-5deg);
-        opacity: 0;
-      }
-      to {
-        transform: scale(1) rotate(0deg);
-        opacity: 1;
-      }
-    }
-    
-    @media (max-width: 480px) {
-      .container {
-        padding: 2rem 1.5rem 2rem 1.5rem;
-        max-width: 95vw;
-        margin: 1rem;
-      }
-      
-      .wedding-title {
-        font-size: 2rem;
-      }
-      
-      .photo-modal-content {
-        width: 90vw;
-        height: 70vh;
-        max-width: 340px;
-        max-height: 640px;
-      }
-      
-      .modal-content {
-        padding: 2rem 1.5rem 1.5rem 1.5rem;
-      }
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&amp;family=Frank+Ruhl+Libre:wght@400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400&amp;display=swap">
+  <link rel="stylesheet" href="/assets/wedding-theme.css">
+  <link rel="stylesheet" href="/assets/rsvp-landing.css">
 </head>
-<body>
-  <div class="container">
-    <div class="wedding-header">
-      <h1 class="wedding-title">
-        <img id="groom-photo" src="" alt="" class="wedding-sticker" style="display:none;" onerror="this.style.display='none'">
-        <span id="couple-names"></span>
-        <img id="bride-photo" src="" alt="" class="wedding-sticker" style="display:none;" onerror="this.style.display='none'">
-      </h1>
-      <p class="wedding-subtitle">מתחתנים!</p>
-      <div class="wedding-date">
-        בתאריך: <span id="wedding-date-text"></span><br>
-        בשעה: <span id="wedding-time-text"></span><br>
-        <span id="venue-text"></span><br>
-        <a id="waze-link" href="#" target="_blank" style="display:none;">
-          לחצו להכוונה בוויז
-        </a>
+<body class="guest-page rsvp-form-page">
+  <a class="skip-to-content" href="#main-content">דילוג לתוכן</a>
+  <div class="container" id="main-content" role="main" tabindex="-1">
+    <header class="wedding-header">
+      <div class="invitation-kicker" id="invitation-kicker" dir="auto">SAVE OUR DATE</div>
+      <p class="wedding-subtitle" id="landing-title">יום אחד. אהבה גדולה.</p>
+      <h1 class="wedding-title" id="couple-names">החתונה שלנו</h1>
+      <div class="couple-portraits" id="couple-portraits">
+        <img id="groom-photo" alt="" class="wedding-sticker" hidden>
+        <span class="portrait-ampersand" aria-hidden="true">&amp;</span>
+        <img id="bride-photo" alt="" class="wedding-sticker" hidden>
       </div>
-    </div>
-
-    <div id="personalized-greeting" class="personalized-greeting" style="display: none;"></div>
-
-    <p class="invite-message">
-      שמחים להזמין אתכם לחתונה שלנו! 🎊<br>
-    </p>
-    
+      <p class="invite-message" id="invitation-message">נשמח לחגוג את היום שלנו יחד איתכם.</p>
+      <a class="hero-cta" href="#rsvp-section">לאישור הגעה <span aria-hidden="true">↓</span></a>
+    </header>
+    <section class="event-details" aria-label="פרטי האירוע">
+      <div><span class="detail-label">מתי נפגשים</span><strong id="wedding-date-text">בקרוב</strong></div>
+      <div><span class="detail-label">מתחילים לחגוג</span><strong id="wedding-time-text">—</strong></div>
+      <div class="venue-detail"><span class="detail-label">איפה הקסם קורה</span><strong id="venue-text">—</strong>
+        <a id="waze-link" href="#" target="_blank" rel="noopener" style="display:none;">ניווט למקום ↗</a>
+      </div>
+    </section>
+    <section id="rsvp-section" aria-labelledby="rsvp-heading">
+      <p class="section-kicker" dir="ltr">LET’S CELEBRATE</p>
+      <h2 id="rsvp-heading">אז, רואים אתכם?</h2>
+      <div id="personalized-greeting" class="personalized-greeting" style="display:none;"></div>
+      <p class="rsvp-note">רק רגע קטן, ואנחנו כבר מחכים לכם.</p>
     <div class="form-container">
       <form id="rsvp-form" autocomplete="off">
         <label for="guests">כמה תהיו? (כולל אותך)</label>
@@ -647,7 +55,7 @@
         </select>
         <div id="action-buttons" style="display: flex; gap: 1rem; margin-top: 1rem;">
           <button type="submit" id="submit-btn" style="flex: 1;">
-            <span id="btn-text">סימנתי כמה נהיה ונגיע</span>
+            <span id="btn-text">כן, נגיע לחגוג!</span>
             <span id="btn-spinner" style="display:none; margin-right:8px; vertical-align:middle;">
               <svg width="20" height="20" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="#fff">
                 <g fill="none" fill-rule="evenodd">
@@ -677,7 +85,7 @@
             </span>
           </button>
           <button type="button" id="not-sure-btn" style="flex: 1; background: linear-gradient(135deg, #f59e0b, #d97706);">
-            <span id="not-sure-text">עוד לא יודע</span>
+            <span id="not-sure-text">עדיין לא בטוחים</span>
           </button>
         </div>
         <div id="global-loader" class="global-loader" style="display:none; align-items:center; justify-content:center; gap:10px; margin-top: 1rem;">
@@ -696,7 +104,9 @@
       </form>
     </div>
     
-    <div class="confirmation" id="confirmation"></div>
+    </section>
+    <p class="guest-signoff" id="landing-signoff" dir="auto">with love, always.</p>
+    <div class="confirmation" id="confirmation" role="status" aria-live="polite"></div>
   </div>
   
   <div id="custom-modal" class="modal-backdrop" style="display:none;">
@@ -709,9 +119,10 @@
     </div>
   </div>
   
-  <div id="photo-modal" class="photo-modal-backdrop" style="display:none;">
+  <div id="photo-modal" role="dialog" aria-modal="true" aria-label="תודה על התשובה" class="photo-modal-backdrop" style="display:none;">
     <div class="photo-modal-content">
-      <button id="photo-close" class="photo-close-btn">×</button>
+      <button aria-label="סגירה" id="photo-close" class="photo-close-btn">×</button>
+      <video id="photo-video" playsinline muted loop controls hidden></video>
       <img id="photo-image" src="" alt="תמונה" style="display:none;">
     </div>
   </div>
@@ -759,32 +170,54 @@
 
     // Function to show the approval/decline gif popup; silently no-ops if that slot
     // hasn't been uploaded yet (media upload is optional/skippable during onboarding)
-    function showGifPopup(gifUrl) {
-      photoImage.onerror = () => { photoModal.style.display = 'none'; };
-      photoImage.src = gifUrl;
-      photoImage.style.display = 'block';
-      photoModal.style.display = 'flex';
+    let responseMediaEnabled = true;
+    let popupTrigger;
+    let mediaRequest = 0;
+    async function showGifPopup(gifUrl) {
+      if (!responseMediaEnabled) return;
+      const request = ++mediaRequest;
+      try {
+        const res = await fetch(gifUrl);
+        if (!res.ok || request !== mediaRequest) return;
+        const blob = await res.blob();
+        if (request !== mediaRequest) return;
+        const video = document.getElementById('photo-video');
+        const isVideo = blob.type.startsWith('video/');
+        photoImage.style.display = isVideo ? 'none' : 'block';
+        video.hidden = !isVideo;
+        const media = isVideo ? video : photoImage;
+        if (media.dataset.objectUrl) URL.revokeObjectURL(media.dataset.objectUrl);
+        await new Promise((resolve, reject) => {
+          const ready = () => {
+            const width = isVideo ? video.videoWidth : photoImage.naturalWidth;
+            const height = isVideo ? video.videoHeight : photoImage.naturalHeight;
+            if (!width || !height) { reject(new Error('Invalid media dimensions')); return; }
+            photoModal.querySelector('.photo-modal-content').style.setProperty('--media-ratio', width / height);
+            resolve();
+          };
+          if (isVideo) video.onloadedmetadata = ready;
+          else photoImage.onload = ready;
+          media.onerror = reject;
+          media.src = media.dataset.objectUrl = URL.createObjectURL(blob);
+        });
+        if (request !== mediaRequest) return;
+        popupTrigger = document.activeElement;
+        photoModal.style.display = 'flex';
+        photoCloseBtn.focus();
+        if (isVideo && document.body.dataset.motion !== 'off' && !matchMedia('(prefers-reduced-motion: reduce)').matches) video.play().catch(() => {});
+      } catch { /* The saved response remains visible when optional media is unavailable. */ }
     }
-
-    // Function to hide photo popup
     function hidePhotoPopup() {
+      mediaRequest++;
       photoModal.style.display = 'none';
-      // Reset animation state
-      photoModal.style.animation = 'none';
-      photoModal.querySelector('.photo-modal-content').style.animation = 'none';
-      // Force reflow
-      photoModal.offsetHeight;
-      // Restore animations
-      photoModal.style.animation = '';
-      photoModal.querySelector('.photo-modal-content').style.animation = '';
+      document.getElementById('photo-video').pause();
+      popupTrigger?.focus();
     }
-
-    // Add event listener for photo close button
     photoCloseBtn.addEventListener('click', hidePhotoPopup);
-    photoModal.addEventListener('click', function(e) {
-      if (e.target === photoModal) {
-        hidePhotoPopup();
-      }
+    photoModal.addEventListener('click', e => { if (e.target === photoModal) hidePhotoPopup(); });
+    photoModal.addEventListener('keydown', e => {
+      if (e.key === 'Escape') hidePhotoPopup();
+      if (e.key === 'Tab' && document.getElementById('photo-video').hidden) { e.preventDefault(); photoCloseBtn.focus(); }
     });
 
     // Function to check if phone number exists in invited list
@@ -817,38 +250,69 @@
       root.setProperty('--primary-dark', darkHex);
       root.setProperty('--primary-rgb', rgb.join(', '));
       root.setProperty('--primary-dark-rgb', darkRgb.join(', '));
+      const linear = darkRgb.map(c => c / 255 <= .04045 ? c / 255 / 12.92 : ((c / 255 + .055) / 1.055) ** 2.4);
+      const luminance = linear[0] * .2126 + linear[1] * .7152 + linear[2] * .0722;
+      root.setProperty('--button-ink', luminance > .179 ? '#111111' : '#ffffff');
     }
 
+    function renderConfig(config) {
+      applyThemeColor(config.theme_color);
+      const design = config.rsvp_design || {};
+      const style = document.documentElement.style;
+      if (/^#[0-9a-f]{6}$/i.test(design.background)) style.setProperty('--landing-bg', design.background);
+      if (/^#[0-9a-f]{6}$/i.test(design.text_color)) style.setProperty('--landing-ink', design.text_color);
+      document.body.dataset.photoStyle = design.photo_style || 'arch';
+      document.body.dataset.font = design.font || 'serif';
+      document.body.dataset.motion = design.motion || 'on';
+      responseMediaEnabled = design.response_media !== 'off';
+      const names = formatHebrewNameList([config.couple_name_1, config.couple_name_2]) || 'החתונה שלנו';
+      document.title = `${names} - אישור הגעה לחתונה`;
+      document.getElementById('groom-photo').alt = config.couple_name_1 || 'תמונה של בני הזוג';
+      document.getElementById('bride-photo').alt = config.couple_name_2 || 'תמונה של בני הזוג';
+      const texts = {
+        'couple-names': names, 'wedding-date-text': config.wedding_date || 'בקרוב',
+        'wedding-time-text': config.wedding_time || '—', 'venue-text': config.venue_name || '—',
+        'invitation-kicker': design.kicker ?? 'SAVE OUR DATE',
+        'landing-title': design.title ?? 'יום אחד. אהבה גדולה.',
+        'invitation-message': design.message ?? 'נשמח לחגוג את היום שלנו יחד איתכם.',
+        'landing-signoff': design.signoff ?? 'with love, always.',
+        'btn-text': design.button_text || 'כן, נגיע לחגוג!'
+      };
+      Object.entries(texts).forEach(([id, text]) => { document.getElementById(id).textContent = text; });
+      const waze = document.getElementById('waze-link');
+      waze.style.display = 'none';
+      try { const url = new URL(config.waze_link); if (['https:', 'http:'].includes(url.protocol)) { waze.href = url.href; waze.style.display = 'inline-block'; } } catch {}
+    }
+    let hasLivePreviewConfig = false;
+    const previewChannel = PREVIEW_MODE && 'BroadcastChannel' in window
+      ? new BroadcastChannel(`rsvp-preview-${TENANT_ID}`) : null;
+    function receivePreview(message) {
+      if (!PREVIEW_MODE || message?.type !== 'rsvp-design-preview' || !message.config) return;
+      hasLivePreviewConfig = true;
+      renderConfig(message.config);
+    }
+    if (previewChannel) {
+      previewChannel.onmessage = event => receivePreview(event.data);
+      previewChannel.postMessage({ type: 'rsvp-preview-ready' });
+    }
     async function loadConfig() {
       try {
         const response = await fetch(`/api/public/${TENANT_ID}/config`);
-        if (!response.ok) return;
-        const config = await response.json();
-
-        applyThemeColor(config.theme_color);
-        const coupleNames = formatHebrewNameList([config.couple_name_1, config.couple_name_2]);
-        document.title = `${coupleNames} - אישור הגעה לחתונה`;
-        document.getElementById('couple-names').textContent = coupleNames;
-        document.getElementById('wedding-date-text').textContent = config.wedding_date;
-        document.getElementById('wedding-time-text').textContent = config.wedding_time;
-        document.getElementById('venue-text').textContent = config.venue_name;
-
-        const wazeLink = document.getElementById('waze-link');
-        if (config.waze_link) {
-          wazeLink.href = config.waze_link;
-          wazeLink.style.display = 'inline-block';
-        }
-
-        const groomPhoto = document.getElementById('groom-photo');
-        groomPhoto.src = GROOM_PHOTO;
-        groomPhoto.style.display = 'inline-block';
-        const bridePhoto = document.getElementById('bride-photo');
-        bridePhoto.src = BRIDE_PHOTO;
-        bridePhoto.style.display = 'inline-block';
-      } catch (error) {
-        console.error('Error fetching config:', error);
-      }
+        if (!response.ok) throw new Error('Config unavailable');
+        const savedConfig = await response.json();
+        if (!hasLivePreviewConfig) renderConfig(savedConfig);
+        [[ 'groom-photo', GROOM_PHOTO ], [ 'bride-photo', BRIDE_PHOTO ]].forEach(([id, url]) => {
+          const img = document.getElementById(id);
+          img.onload = () => { img.hidden = false; document.getElementById('couple-portraits').classList.add('has-photos'); };
+          img.onerror = () => { img.hidden = true; };
+          img.src = url;
+        });
+        if (PREVIEW_MODE) window.parent.postMessage({ type: 'rsvp-preview-ready' }, location.origin);
+      } catch { confirmation.textContent = 'לא הצלחנו לטעון את פרטי האירוע. נסו לרענן את העמוד.'; }
     }
+    window.addEventListener('message', event => {
+      if (event.origin === location.origin && event.source === window.parent) receivePreview(event.data);
+    });
 
     // Function to display personalized greeting
     async function displayPersonalizedGreeting() {

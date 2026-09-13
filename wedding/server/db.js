@@ -92,4 +92,9 @@ migrateDoNotSendColumn();
 const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 db.exec(schema);
 
+// Additive migration applies to both existing accounts and fresh databases.
+if (!columnExists('settings', 'rsvp_design')) {
+  db.exec("ALTER TABLE settings ADD COLUMN rsvp_design TEXT NOT NULL DEFAULT '{}'");
+}
+
 module.exports = { db, uploadsDir };

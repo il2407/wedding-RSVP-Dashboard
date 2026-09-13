@@ -2,6 +2,7 @@ const express = require('express');
 const { db } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 
+const { DEFAULT_DESIGN, validateDesign } = require('../rsvpDesign');
 const router = express.Router();
 
 const SETTINGS_FIELDS = [
@@ -24,7 +25,7 @@ function loadConfig(userId) {
   const settings = db.prepare('SELECT * FROM settings WHERE user_id = ?').get(userId);
   if (!settings) return null;
   const { count } = db.prepare('SELECT COUNT(*) AS count FROM invited_guests WHERE user_id = ?').get(userId);
-  return { ...settings, totalInvited: count };
+  return { ...settings, rsvp_design: { ...DEFAULT_DESIGN, ...JSON.parse(settings.rsvp_design || '{}') }, totalInvited: count };
 }
 
 router.get('/public/:userId/config', (req, res) => {
@@ -43,6 +44,10 @@ router.put('/admin/config', requireAuth, (req, res) => {
   }
 
   const updates = {};
+  if (req.body.rsvp_design !== undefined) {
+    try { updates.rsvp_design = JSON.stringify(validateDesign(req.body.rsvp_design)); }
+    catch (err) { return res.status(400).json({ error: err.message }); }
+  }
   for (const field of SETTINGS_FIELDS) {
     if (req.body[field] !== undefined) {
       updates[field] = String(req.body[field]);

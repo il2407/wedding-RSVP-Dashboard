@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>הגדרת האירוע</title>
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
 
@@ -196,10 +195,15 @@
 
     .file-format-hint a:hover { text-decoration: underline; }
   </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&amp;family=Frank+Ruhl+Libre:wght@400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400&amp;display=swap">
+  <link rel="stylesheet" href="/assets/wedding-theme.css">
 </head>
-<body>
-  <div class="container">
-    <div class="steps">
+<body class="setup-page onboarding-page">
+  <a class="skip-to-content" href="#main-content">דילוג לתוכן</a>
+  <div class="container" id="main-content" role="main" tabindex="-1">
+    <div class="brand" dir="ltr"><span class="brand-mark" aria-hidden="true">&amp;</span><div><strong>ever after</strong><span class="brand-caption">WEDDING RSVP</span></div></div><p class="setup-intro">מתחילים לתכנן את היום שלכם</p><div class="steps" aria-label="שלבי הגדרת האירוע">
       <div class="step-dot active" id="dot-1">1</div>
       <div class="step-dot" id="dot-2">2</div>
     </div>
@@ -256,7 +260,7 @@
       <label for="single-name">הוספת מוזמן בודד</label>
       <div class="two-col">
         <input type="text" id="single-name" placeholder="שם">
-        <input type="text" id="single-phone" placeholder="טלפון" dir="ltr">
+        <input type="text" id="single-phone" aria-label="טלפון המוזמן" placeholder="טלפון" dir="ltr">
       </div>
       <button type="button" id="add-single-btn" class="secondary">הוספה</button>
 

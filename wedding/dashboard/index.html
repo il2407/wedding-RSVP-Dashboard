@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>דשבורד אישורי הגעה</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
     
     * {
       margin: 0;
@@ -422,53 +421,60 @@
       padding: 1.8rem !important;
     }
   </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&amp;family=Frank+Ruhl+Libre:wght@400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400&amp;display=swap">
+  <link rel="stylesheet" href="/assets/wedding-theme.css">
 </head>
-<body>
-  <div class="dashboard-container">
-    <nav class="admin-nav">
-      <a href="/dashboard/" class="admin-nav-link active">דשבורד</a>
-      <a href="/admin/" class="admin-nav-link">ניהול</a>
-      <a href="/bulk-messaging/" class="admin-nav-link">שליחה המונית</a>
-      <a href="#" class="admin-nav-link admin-nav-logout" id="logout-link">יציאה</a>
-    </nav>
-    <h1 id="page-title">דשבורד אישורי הגעה</h1>
+<body class="workspace-page dashboard-page">
+  <a class="skip-to-content" href="#page-heading">דילוג לתוכן</a>
+  <div class="dashboard-container" id="main-content" role="main" tabindex="-1">
+    <nav class="admin-nav" aria-label="ניווט ראשי"><div class="brand" dir="ltr"><span class="brand-mark" aria-hidden="true">&amp;</span><div><strong>ever after</strong><span class="brand-caption">WEDDING RSVP</span></div></div><span class="nav-caption">החתונה שלכם</span>
+      <a href="/dashboard/" class="admin-nav-link active" aria-current="page"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#grid"></use></svg>סקירה כללית</a>
+      <a href="/admin/" class="admin-nav-link"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#settings"></use></svg>ניהול האירוע</a>
+      <a href="/bulk-messaging/" class="admin-nav-link"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#message"></use></svg>הודעות לאורחים</a>
+      <a href="#" class="admin-nav-link admin-nav-logout" id="logout-link"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#exit"></use></svg>יציאה מהחשבון</a>
+    <div class="nav-note"><span dir="ltr">Made for your forever.</span><small>כל האנשים שלכם. במקום אחד.</small></div></nav>
+    <header class="page-heading" id="page-heading" tabindex="-1"><div><p class="eyebrow">YOUR WEDDING, AT A GLANCE</p><h1 id="page-title">החתונה שלכם, במבט אחד</h1><p class="page-description">כל האורחים, האישורים וההסעות — לקראת היום שלכם.</p></div><span class="heading-seal" aria-hidden="true">&amp;</span></header>
+    <div class="event-strip" id="event-details" hidden></div>
 
-    <div class="tabs">
-      <button class="tab-btn active" id="tab-rsvp">אישורי הגעה</button>
-      <button class="tab-btn" id="tab-invited">רשימת מוזמנים</button>
-      <button class="tab-btn" id="tab-bus">הסעות</button>
-    </div>
+
     
     <div class="stats" id="stats-section">
-      <div class="stat-box">
-        <span class="stat-label">סה״כ הזמנות שנשלחו</span>
+      <div class="stat-box stat-users"><span class="stat-icon"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#users"></use></svg></span>
+        <span class="stat-label">הזמנות ברשימה</span>
         <span class="stat-value" id="total-invited">—</span>
       </div>
-      <div class="stat-box">
+      <div class="stat-box stat-check"><span class="stat-icon"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#check"></use></svg></span>
         <span class="stat-label">הזמנות שנענו</span>
         <span class="stat-value" id="responded">—</span>
       </div>
-      <div class="stat-box">
+      <div class="stat-box stat-clock"><span class="stat-icon"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#clock"></use></svg></span>
         <span class="stat-label">הזמנות שטרם נענו</span>
         <span class="stat-value" id="not-approved">—</span>
       </div>
-      <div class="stat-box">
+      <div class="stat-box stat-heart"><span class="stat-icon"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#heart"></use></svg></span>
         <span class="stat-label">סה״כ מגיעים (כולל נלווים)</span>
         <span class="stat-value" id="approved">—</span>
       </div>
-      <div class="stat-box">
+      <div class="stat-box stat-minus"><span class="stat-icon"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#minus"></use></svg></span>
         <span class="stat-label">הודיעו שלא מגיעים</span>
         <span class="stat-value" id="declined">—</span>
       </div>
     </div>
 
-    <div class="form-group" style="margin-bottom:1rem;">
-      <button type="button" class="secondary-btn" id="export-csv-btn">⬇️ ייצוא רשימת מוזמנים ל-CSV</button>
+    <section class="response-overview" aria-label="התקדמות אישורי הגעה"><div><span class="overview-label">התקדמות אישורי ההגעה</span><strong id="response-percent">—</strong></div><progress id="response-progress" max="100" value="0" aria-label="אחוז ההזמנות שנענו"></progress><p id="response-summary">ממתינים לנתוני האירוע</p></section>
+    <div class="guest-toolbar">    <div class="tabs">
+      <button class="tab-btn active" aria-pressed="true" id="tab-rsvp">אישורי הגעה</button>
+      <button class="tab-btn" aria-pressed="false" id="tab-invited">רשימת מוזמנים</button>
+      <button class="tab-btn" aria-pressed="false" id="tab-bus">הסעות</button>
+    </div>
+      <button type="button" class="secondary-btn" id="export-csv-btn"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#download"></use></svg>ייצוא ל־CSV</button>
     </div>
 
     <div class="table-container" id="rsvp-table-container">
-      <input type="text" id="rsvp-search" class="search-input" placeholder="חיפוש לפי שם או טלפון...">
-      <table id="rsvp-table">
+      <input type="text" aria-label="חיפוש לפי שם או טלפון" id="rsvp-search" class="search-input" placeholder="חיפוש לפי שם או טלפון...">
+      <div class="table-scroll" tabindex="0" role="region" aria-label="טבלת אורחים"><table id="rsvp-table">
         <thead>
           <tr>
             <th>שם</th>
@@ -480,12 +486,12 @@
         <tbody>
           <!-- Data will be inserted here -->
         </tbody>
-      </table>
+      </table></div>
     </div>
     
     <div class="table-container" id="invited-table-container" style="display:none;">
-      <input type="text" id="invited-search" class="search-input" placeholder="חיפוש לפי שם או טלפון...">
-      <table id="invited-table">
+      <input type="text" aria-label="חיפוש לפי שם או טלפון" id="invited-search" class="search-input" placeholder="חיפוש לפי שם או טלפון...">
+      <div class="table-scroll" tabindex="0" role="region" aria-label="טבלת אורחים"><table id="invited-table">
         <thead>
           <tr>
             <th>שם</th>
@@ -498,12 +504,12 @@
         <tbody>
           <!-- Invited data will be inserted here -->
         </tbody>
-      </table>
+      </table></div>
     </div>
 
     <div class="table-container" id="bus-table-container" style="display:none;">
-      <input type="text" id="bus-search" class="search-input" placeholder="חיפוש לפי שם או טלפון...">
-      <table id="bus-table">
+      <input type="text" aria-label="חיפוש לפי שם או טלפון" id="bus-search" class="search-input" placeholder="חיפוש לפי שם או טלפון...">
+      <div class="table-scroll" tabindex="0" role="region" aria-label="טבלת אורחים"><table id="bus-table">
         <thead>
           <tr>
             <th>שם מלא</th>
@@ -516,7 +522,7 @@
         <tbody>
           <!-- Bus registration data will be inserted here -->
         </tbody>
-      </table>
+      </table></div>
     </div>
   </div>
   <script src="/assets/hebrew-name-format.js"></script>
@@ -538,7 +544,11 @@
       const config = await res.json();
       const title = `דשבורד אישורי הגעה - ${formatHebrewNameList([config.couple_name_1, config.couple_name_2])}`;
       document.title = title;
-      document.getElementById('page-title').textContent = title;
+      document.getElementById('page-title').textContent = formatHebrewNameList([config.couple_name_1, config.couple_name_2]) || 'החתונה שלכם, במבט אחד';
+      const details = [config.wedding_date, config.wedding_time, config.venue_name].filter(Boolean);
+      const strip = document.getElementById('event-details');
+      strip.textContent = details.join('  ·  ');
+      strip.hidden = !details.length;
     }
 
     async function fetchRSVPs() {
@@ -632,6 +642,12 @@
       document.getElementById('not-approved').textContent = stats.unanswered;
       document.getElementById('approved').textContent = stats.confirmedAttendees;
       document.getElementById('declined').textContent = stats.declined;
+      const percentage = stats.totalInvited > 0 ? Math.min(100, Math.round(stats.responded / stats.totalInvited * 100)) : 0;
+      document.getElementById('response-percent').textContent = percentage + '%';
+      document.getElementById('response-progress').value = percentage;
+      document.getElementById('response-summary').textContent = stats.totalInvited > 0
+        ? `${stats.responded} מתוך ${stats.totalInvited} הזמנות נענו · ${stats.unanswered} עדיין ממתינות לתשובה`
+        : 'הוסיפו מוזמנים דרך ניהול האירוע כדי להתחיל';
     }
 
     async function loadDashboard() {
@@ -807,7 +823,8 @@
         document.getElementById(cfg.btn).classList.toggle('active', key === tabKey);
         document.getElementById(cfg.container).style.display = key === tabKey ? '' : 'none';
       });
-      document.getElementById('stats-section').style.display = TABS[tabKey].showStats ? '' : 'none';
+      document.getElementById('stats-section').style.display = '';
+      document.querySelectorAll('.tabs .tab-btn').forEach(button => button.setAttribute('aria-pressed', String(button.classList.contains('active'))));
       if (TABS[tabKey].onShow) TABS[tabKey].onShow();
     }
 

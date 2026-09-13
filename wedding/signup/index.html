@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>הרשמה</title>
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     * { box-sizing: border-box; }
@@ -128,10 +127,16 @@
       background: rgba(0, 0, 0, 0.1);
     }
   </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&amp;family=Frank+Ruhl+Libre:wght@400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400&amp;display=swap">
+  <link rel="stylesheet" href="/assets/wedding-theme.css">
 </head>
-<body>
-  <div class="card">
-    <h1>יצירת חשבון</h1>
+<body class="auth-page signup-page">
+  <a class="skip-to-content" href="#main-content">דילוג לתוכן</a>
+<aside class="auth-story"><div class="brand" dir="ltr"><span class="brand-mark" aria-hidden="true">&amp;</span><div><strong>ever after</strong><span class="brand-caption">WEDDING RSVP</span></div></div><div class="story-copy"><p class="eyebrow">A LITTLE LESS PLANNING. A LOT MORE LOVE.</p><h2>כל האנשים שאתם אוהבים.<br>יום אחד שהוא שלכם.</h2><p>אישורי הגעה, הזמנות והסעות.<br>כל הפרטים בדרך לחתונה, במקום אחד.</p></div><span class="story-ampersand" aria-hidden="true">&amp;</span><span class="story-footer" dir="ltr">TOGETHER IS A BEAUTIFUL PLACE TO BE.</span></aside>
+  <div class="card" id="main-content" role="main" tabindex="-1">
+    <p class="eyebrow">YOUR FOREVER STARTS HERE</p><h1>יצירת חשבון</h1>
     <p class="subtitle">נהלו את אישורי ההגעה לחתונה שלכם</p>
     <div id="google-signin-container" class="google-signin-container" style="display:none;">
       <div id="google-signin-button"></div>
@@ -144,7 +149,7 @@
       <input type="password" id="password" name="password" required autocomplete="new-password" minlength="8">
       <div class="hint">לפחות 8 תווים</div>
       <button type="submit">הרשמה</button>
-      <div id="status" class="status-msg"></div>
+      <div id="status" class="status-msg" role="status" aria-live="polite"></div>
     </form>
     <div class="switch-link">
       כבר יש לך חשבון? <a href="/login/">התחברות</a>

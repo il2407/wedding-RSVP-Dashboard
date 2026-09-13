@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>הרשמה להסעה</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
     /* Overridden per-tenant via JS from the couple's chosen theme color (see applyThemeColor) */
     :root {
@@ -398,10 +397,15 @@
       }
     }
   </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&amp;family=Frank+Ruhl+Libre:wght@400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400&amp;display=swap">
+  <link rel="stylesheet" href="/assets/wedding-theme.css">
 </head>
-<body>
-  <div class="container">
-    <div class="bus-header">
+<body class="guest-page bus-approval-page">
+  <a class="skip-to-content" href="#main-content">דילוג לתוכן</a>
+  <div class="container" id="main-content" role="main" tabindex="-1">
+    <div class="invitation-kicker" dir="ltr">LET’S CELEBRATE TOGETHER</div><div class="bus-header">
       <h1 class="bus-title">
         <img id="groom-photo" src="" alt="" class="wedding-sticker" style="display:none;" onerror="this.style.display='none'">
         רישום להסעה
@@ -411,7 +415,7 @@
         <div class="bus-info">
           <span id="bus-pickup-text"></span><br>
           <span id="bus-destination-text"></span><br>
-          🎊<br>
+
           יוצאת בשעה <span id="bus-departure-text"></span><br>
           חוזרת בשעה <span id="bus-return-text"></span>
         </div>
@@ -558,7 +562,8 @@
       </div>
     </div>
     
-    <div class="confirmation" id="confirmation"></div>
+    <p class="guest-signoff" dir="ltr">with love, always.</p>
+    <div class="confirmation" id="confirmation" role="status" aria-live="polite"></div>
   </div>
   
   <script src="/assets/hebrew-name-format.js"></script>

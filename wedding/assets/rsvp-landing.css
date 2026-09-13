@@ -1,0 +1,65 @@
+/* Mobile invitation, isolated from the dashboard and transport form. */
+:root { --landing-bg:#faf6ef; --landing-ink:#302e29; }
+body.rsvp-form-page { --ink:var(--landing-ink); --muted:var(--landing-ink); display:block; padding:0; background:var(--landing-bg); color:var(--landing-ink); }
+.rsvp-form-page > .container { width:100%; max-width:640px; margin:auto; padding:48px 24px 32px; border:0; border-radius:0; background:transparent; box-shadow:none; text-align:center; overflow:hidden; }
+.rsvp-form-page .wedding-header { margin:0; }
+.rsvp-form-page .invitation-kicker,.rsvp-form-page .section-kicker { font:500 10px/1.5 Arial,sans-serif; letter-spacing:.24em; margin:0 0 28px; color:var(--landing-ink); }
+.rsvp-form-page .wedding-subtitle { margin:0 0 8px; font-size:15px; color:var(--landing-ink); }
+.rsvp-form-page .wedding-title { display:block; font-size:clamp(42px,10vw,68px); line-height:1.15; font-weight:400; overflow-wrap:anywhere; margin:0 0 28px; color:var(--landing-ink); }
+.rsvp-form-page[data-font=sans] :is(.wedding-title,#rsvp-heading) { font-family:'Heebo',Arial,sans-serif; font-weight:600; }
+.couple-portraits { display:none; position:relative; align-items:center; justify-content:center; gap:12px; margin:32px 0; }
+.couple-portraits.has-photos { display:flex; }
+.rsvp-form-page .wedding-sticker { width:calc(50% - 6px); max-width:240px; height:auto; aspect-ratio:3/4; object-fit:cover; border-radius:130px 130px 12px 12px; background:color-mix(in srgb,var(--primary) 8%,var(--landing-bg)); transform:rotate(-8deg); border:6px solid color-mix(in srgb,var(--landing-bg) 60%,white); box-shadow:0 12px 30px #302e2915; }
+.rsvp-form-page .wedding-sticker { transform-origin:50% 85%; animation:portrait-dance 1.1s ease-in-out infinite; }
+.rsvp-form-page .wedding-sticker:last-child { transform:rotate(8deg); animation-delay:-.55s; }
+@keyframes portrait-dance {
+  0%,100% { transform:translateX(-9px) translateY(0) rotate(-8deg); }
+  25% { transform:translateX(3px) translateY(-8px) rotate(5deg); }
+  50% { transform:translateX(9px) translateY(0) rotate(8deg); }
+  75% { transform:translateX(-3px) translateY(-8px) rotate(-5deg); }
+}
+.rsvp-form-page .wedding-sticker[hidden] { display:none; }
+.rsvp-form-page[data-photo-style=polaroid] .wedding-sticker { border-radius:2px; border-bottom-width:28px; }
+.rsvp-form-page[data-photo-style=circle] .wedding-sticker { aspect-ratio:1; border-radius:50%; }
+.rsvp-form-page[data-photo-style=natural] .wedding-sticker { object-fit:contain; border:0; box-shadow:none; background:none; border-radius:0; }
+.portrait-ampersand { position:absolute; left:50%; top:60%; transform:translate(-50%,-50%); z-index:1; font:italic 62px Georgia,serif; color:var(--landing-ink); text-shadow:0 2px 10px var(--landing-bg); }
+.couple-portraits:has(img[hidden]) .portrait-ampersand { display:none; }
+.rsvp-form-page .invite-message { color:var(--landing-ink); font-size:16px; line-height:1.9; margin:28px auto 20px; max-width:32ch; white-space:pre-line; overflow-wrap:anywhere; }
+.hero-cta { display:inline-flex; align-items:center; gap:28px; min-height:48px; text-decoration:none; border-bottom:1px solid currentColor; color:var(--landing-ink); font-size:14px; }
+.event-details { display:grid; grid-template-columns:1fr 1fr; gap:24px 12px; border-block:1px solid color-mix(in srgb,var(--landing-ink) 20%,transparent); margin:38px 0; padding:26px 0; }
+.event-details strong { display:block; font-size:21px; font-weight:500; overflow-wrap:anywhere; }
+.detail-label { display:block; font-size:12px; margin-bottom:6px; opacity:.75; }
+.venue-detail { grid-column:1/-1; }
+.venue-detail a { display:inline-block; min-height:44px; padding:10px; font-size:13px; color:var(--landing-ink); }
+#rsvp-section { scroll-margin-top:24px; }
+.rsvp-form-page .section-kicker { margin-bottom:10px; }
+.rsvp-form-page #rsvp-heading { font:400 36px/1.3 'Frank Ruhl Libre',Georgia,serif; margin:0; color:var(--landing-ink); }
+.rsvp-note { margin:10px 0 24px; font-size:14px; }
+.rsvp-form-page .personalized-greeting { background:transparent; border:0; color:var(--landing-ink); padding:0; margin:16px 0 0; }
+.rsvp-form-page .form-container { background:color-mix(in srgb,var(--landing-bg) 65%,white); border:1px solid color-mix(in srgb,var(--landing-ink) 15%,transparent); padding:24px 20px; border-radius:20px; }
+.rsvp-form-page #action-buttons { gap:10px!important; }
+.rsvp-form-page #action-buttons button { min-height:52px; flex:1; min-width:0; font-size:14px; border-radius:12px; box-shadow:none; white-space:normal; }
+.rsvp-form-page #submit-btn { background:var(--primary-dark); color:var(--button-ink,#fff); }
+.rsvp-form-page #not-coming-btn,.rsvp-form-page #not-sure-btn { background:transparent!important; color:var(--landing-ink); border:1px solid color-mix(in srgb,var(--landing-ink) 25%,transparent); }
+.rsvp-form-page #guests { min-height:54px; color:var(--landing-ink); background:var(--landing-bg)!important; }
+.rsvp-form-page .guest-signoff { margin-top:32px; color:var(--landing-ink); font-size:20px; overflow-wrap:anywhere; white-space:pre-line; }
+.rsvp-form-page .confirmation { margin-top:20px; font-size:16px; }
+.rsvp-form-page :is(.modal-backdrop,.photo-modal-backdrop) { position:fixed; inset:0; z-index:1000; background:#17251ed0; align-items:center; justify-content:center; padding:20px; }
+.rsvp-form-page :is(.modal-content,.photo-modal-content) { position:relative; width:100%; max-width:420px; max-height:85dvh; overflow:auto; border-radius:20px; background:var(--landing-bg); padding:28px; text-align:center; }
+.rsvp-form-page .photo-modal-content { padding:0; border:0; width:min(92vw,440px,calc((100dvh - 40px) * var(--media-ratio,1))); min-width:min(92vw,240px); max-width:100%; max-height:calc(100dvh - 40px); aspect-ratio:var(--media-ratio,1); overflow:hidden; background:#111; border-radius:24px; box-shadow:0 20px 70px #0006; animation:photo-modal-pop .4s cubic-bezier(.34,1.56,.64,1); }
+.rsvp-form-page .photo-modal-content :is(img,video) { display:block; width:100%; height:100%; max-width:100%; max-height:none; object-fit:cover; border-radius:0; }
+.rsvp-form-page .photo-modal-content [hidden] { display:none; }
+@keyframes photo-modal-pop {
+  0% { transform:scale(.75) rotate(-3deg); opacity:0; }
+  70% { transform:scale(1.03) rotate(1deg); opacity:1; }
+  100% { transform:scale(1) rotate(0); }
+}
+.rsvp-form-page .photo-close-btn { position:absolute; z-index:2; top:10px; right:10px; width:44px; height:44px; color:#fff; background:#0009; border:1px solid #fff8; border-radius:50%; font-size:26px; line-height:1; backdrop-filter:blur(8px); transition:transform .2s ease,background .2s ease; }
+.rsvp-form-page .photo-close-btn:hover { background:#000c; transform:scale(1.08) rotate(90deg); }
+.modal-actions { display:flex; gap:12px; margin-top:24px; }
+.modal-actions button { flex:1; min-height:48px; }
+.rsvp-form-page :focus-visible { outline:3px solid var(--landing-ink); outline-offset:4px; }
+.rsvp-form-page[data-motion=off] *, .rsvp-form-page[data-motion=off] { animation:none!important; transition:none!important; scroll-behavior:auto; }
+@media(min-width:700px) { .rsvp-form-page > .container { padding:64px 48px 40px; } }
+@media(max-width:360px) { .rsvp-form-page > .container { padding-inline:18px; } .rsvp-form-page .form-container { padding:20px 14px; } }
+@media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .rsvp-form-page * { animation:none!important; transition:none!important; } }

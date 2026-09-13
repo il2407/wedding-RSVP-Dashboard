@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ניהול האירוע</title>
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * {
       box-sizing: border-box;
@@ -288,18 +287,31 @@
 
     .file-format-hint a:hover { text-decoration: underline; }
   </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&amp;family=Frank+Ruhl+Libre:wght@400;500;600&amp;family=Playfair+Display:ital,wght@0,400;0,500;1,400&amp;display=swap">
+  <link rel="stylesheet" href="/assets/wedding-theme.css">
+  <style>
+    .invitation-editor { border:1px solid var(--line); border-radius:16px; margin:28px 0; padding:20px; min-width:0; }
+    .invitation-editor legend { padding:0 8px; font-weight:600; }
+    .invitation-editor p,.design-preview>span { font-size:13px; color:var(--muted); }
+    .design-workspace { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,375px); gap:24px; align-items:start; }
+    .design-preview { position:sticky; top:20px; text-align:center; min-width:0; }
+    .design-preview iframe { display:block; width:100%; height:680px; border:6px solid #263d36; border-radius:28px; background:#faf6ef; margin-top:12px; }
+    .design-controls input[type=color] { width:100%; min-height:44px; }
+    @media(max-width:760px) { .design-workspace { grid-template-columns:1fr; } .design-preview { position:static; width:100%; max-width:375px; margin:auto; } .invitation-editor { padding:14px; } }
+  </style>
 </head>
-<body>
-  <div class="container">
-    <nav class="admin-nav">
-      <a href="/dashboard/" class="admin-nav-link">דשבורד</a>
-      <a href="/admin/" class="admin-nav-link active">ניהול</a>
-      <a href="/bulk-messaging/" class="admin-nav-link">שליחה המונית</a>
-      <a href="#" class="admin-nav-link admin-nav-logout" id="logout-link">יציאה</a>
-    </nav>
-    <div class="top-bar">
-      <h1>ניהול האירוע</h1>
-    </div>
+<body class="workspace-page admin-page">
+  <a class="skip-to-content" href="#page-heading">דילוג לתוכן</a>
+  <div class="container" id="main-content" role="main" tabindex="-1">
+    <nav class="admin-nav" aria-label="ניווט ראשי"><div class="brand" dir="ltr"><span class="brand-mark" aria-hidden="true">&amp;</span><div><strong>ever after</strong><span class="brand-caption">WEDDING RSVP</span></div></div><span class="nav-caption">החתונה שלכם</span>
+      <a href="/dashboard/" class="admin-nav-link"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#grid"></use></svg>סקירה כללית</a>
+      <a href="/admin/" class="admin-nav-link active" aria-current="page"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#settings"></use></svg>ניהול האירוע</a>
+      <a href="/bulk-messaging/" class="admin-nav-link"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#message"></use></svg>הודעות לאורחים</a>
+      <a href="#" class="admin-nav-link admin-nav-logout" id="logout-link"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#exit"></use></svg>יציאה מהחשבון</a>
+    <div class="nav-note"><span dir="ltr">Made for your forever.</span><small>כל האנשים שלכם. במקום אחד.</small></div></nav>
+    <header class="page-heading" id="page-heading" tabindex="-1"><div><p class="eyebrow">THE DETAILS MAKE THE DAY</p><h1>ניהול האירוע</h1><p class="page-description">הפרטים הקטנים שהופכים את החתונה לשלכם.</p></div><span class="heading-seal" aria-hidden="true">&amp;</span></header>
 
     <div class="card">
       <h2>תצוגה מקדימה</h2>
@@ -364,6 +376,35 @@
         <label for="theme_color">צבע ערכת נושא לעמודי המוזמנים (אישור הגעה / הסעה)</label>
         <input type="color" id="theme_color" name="theme_color">
 
+        <fieldset class="invitation-editor">
+          <legend>עיצוב ההזמנה שלכם</legend>
+          <p>התאימו את ההזמנה לאופי שלכם. התצוגה מתעדכנת מיד; לחצו על שמירת פרטי האירוע כדי לפרסם את השינויים.</p>
+          <div class="design-workspace"><div class="design-controls">
+<label for="design-background">צבע רקע</label>
+<input id="design-background" data-design="background" type="color" maxlength="120">
+<label for="design-text_color">צבע טקסט</label>
+<input id="design-text_color" data-design="text_color" type="color" maxlength="120">
+<label for="design-font">סגנון גופן</label>
+<select id="design-font" data-design="font"><option value="serif">אלגנטי</option><option value="sans">מודרני</option></select>
+<label for="design-photo_style">מסגרת התמונות</label>
+<select id="design-photo_style" data-design="photo_style"><option value="arch">קשתות</option><option value="polaroid">פולארויד</option><option value="circle">עיגולים</option><option value="natural">ללא חיתוך · מתאים לסטיקרים</option></select>
+<label for="design-kicker">שורת פתיחה</label>
+<input id="design-kicker" data-design="kicker" type="text" maxlength="120">
+<label for="design-title">כותרת ההזמנה</label>
+<input id="design-title" data-design="title" type="text" maxlength="120">
+<label for="design-message">טקסט ההזמנה</label>
+<textarea id="design-message" data-design="message" maxlength="600" rows="3"></textarea>
+<label for="design-signoff">חתימה אישית</label>
+<input id="design-signoff" data-design="signoff" type="text" maxlength="120">
+<label for="design-button_text">טקסט כפתור האישור</label>
+<input id="design-button_text" data-design="button_text" type="text" maxlength="120">
+<label for="design-motion">תנועת התמונות והפעלה אוטומטית של סרטונים</label>
+<select id="design-motion" data-design="motion"><option value="on">פעילה</option><option value="off">כבויה</option></select>
+<label for="design-response_media">תמונות / גיפים לאחר מענה</label>
+<select id="design-response_media" data-design="response_media"><option value="on">להציג</option><option value="off">להסתיר</option></select>
+          </div><div class="design-preview"><span>תצוגת טלפון · ניתן לגלול ולנסות</span><iframe id="invitation-preview" title="תצוגה מקדימה של ההזמנה בטלפון"></iframe></div></div>
+        </fieldset>
+
         <label for="whatsapp_country_code">קידומת מדינה לוואטסאפ</label>
         <input type="text" id="whatsapp_country_code" name="whatsapp_country_code" placeholder="972">
         <label for="template-preset-select">בחירת תבנית לדוגמה</label>
@@ -385,19 +426,19 @@
 
     <div class="card">
       <h2>רשימת מוזמנים</h2>
-      <table id="guests-table">
+      <div class="table-scroll" tabindex="0" role="region" aria-label="רשימת מוזמנים"><table id="guests-table">
         <thead>
           <tr><th>שם</th><th>טלפון</th><th>צפויים</th><th></th></tr>
         </thead>
         <tbody></tbody>
-      </table>
+      </table></div>
 
       <hr class="divider">
 
       <label for="single-name">הוספת מוזמן בודד</label>
       <div class="two-col">
         <input type="text" id="single-name" placeholder="שם">
-        <input type="text" id="single-phone" placeholder="טלפון" dir="ltr">
+        <input type="text" id="single-phone" aria-label="טלפון המוזמן" placeholder="טלפון" dir="ltr">
       </div>
       <button type="button" id="add-single-btn" class="secondary">הוספה</button>
       <span id="single-add-status" class="status-msg"></span>
@@ -494,15 +535,45 @@
       setTimeout(() => { el.textContent = ''; }, 4000);
     }
 
+    let invitationPreviewChannel;
+    let configFormLoaded = false;
+    function readDesign() {
+      return Object.fromEntries([...document.querySelectorAll('[data-design]')].map(el => [el.dataset.design, el.value]));
+    }
+    function updateInvitationPreview() {
+      if (!configFormLoaded) return;
+      const config = Object.fromEntries(CONFIG_FIELDS.map(field => [field, document.getElementById(field).value]));
+      config.rsvp_design = readDesign();
+      const message = { type: 'rsvp-design-preview', config };
+      document.getElementById('invitation-preview').contentWindow?.postMessage(message, location.origin);
+      invitationPreviewChannel?.postMessage(message);
+    }
+    document.getElementById('config-form').addEventListener('input', updateInvitationPreview);
+    document.getElementById('config-form').addEventListener('change', updateInvitationPreview);
+    document.getElementById('invitation-preview').addEventListener('load', updateInvitationPreview);
+    window.addEventListener('message', event => {
+      if (event.origin === location.origin && event.source === document.getElementById('invitation-preview').contentWindow && event.data?.type === 'rsvp-preview-ready') updateInvitationPreview();
+    });
     // --- Event settings ---
     async function loadConfigForm() {
       const res = await fetch('/api/admin/config');
       if (!res.ok) return;
       const config = await res.json();
+      document.querySelectorAll('[data-design]').forEach(el => { el.value = (config.rsvp_design || {})[el.dataset.design] ?? ''; });
+
       CONFIG_FIELDS.forEach((field) => {
         const el = document.getElementById(field);
         if (el) el.value = config[field] || '';
       });
+      configFormLoaded = true;
+      if ('BroadcastChannel' in window) {
+        invitationPreviewChannel = new BroadcastChannel(`rsvp-preview-${currentUserId}`);
+        invitationPreviewChannel.onmessage = event => {
+          if (event.data?.type === 'rsvp-preview-ready') updateInvitationPreview();
+        };
+      }
+      document.getElementById('invitation-preview').src = `/rsvp-form/?u=${currentUserId}&preview=1`;
+      updateInvitationPreview();
     }
 
     document.getElementById('config-form').addEventListener('submit', async (e) => {
@@ -521,6 +592,7 @@
         body[field] = document.getElementById(field).value;
       });
 
+      body.rsvp_design = readDesign();
       const res = await fetch('/api/admin/config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -548,12 +620,14 @@
         const row = document.createElement('div');
         row.className = 'media-slot';
         const preview = bySlot[slot]
-          ? `<img src="/media/${currentUserId}/${slot}?t=${Date.now()}" class="media-thumb" alt="${label}">`
+          ? (bySlot[slot].mime_type.startsWith('video/')
+            ? `<video src="/media/${currentUserId}/${slot}?t=${Date.now()}" class="media-thumb" controls muted playsinline aria-label="${label}"></video>`
+            : `<img src="/media/${currentUserId}/${slot}?t=${Date.now()}" class="media-thumb" alt="${label}">`)
           : '<span class="media-slot-current">לא הועלה עדיין</span>';
         row.innerHTML = `
           <span class="media-slot-name">${label}</span>
           <span class="media-slot-preview">${preview}</span>
-          <input type="file" data-slot="${slot}" style="width:auto;">
+          <input type="file" data-slot="${slot}" accept="${slot.endsWith('_photo') ? 'image/*' : 'image/*,video/mp4,video/webm'}" aria-label="${label}" style="width:auto;">
         `;
         container.appendChild(row);
 
@@ -565,6 +639,7 @@
           const uploadRes = await fetch(`/api/admin/media/${slot}`, { method: 'PUT', body: formData });
           if (uploadRes.ok) {
             await loadMediaSlots();
+            document.getElementById('invitation-preview').contentWindow.location.reload();
           } else {
             alert('שגיאה בהעלאת הקובץ');
           }
