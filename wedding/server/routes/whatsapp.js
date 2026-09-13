@@ -94,6 +94,13 @@ router.post('/admin/whatsapp/jobs', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'scheduled_at is not a valid date' });
   }
 
+  // Without a country code, toE164Digits() would strip leading zeros and prepend nothing,
+  // sending every message in this job to a malformed number.
+  const { rows: settingsRows } = await query('SELECT whatsapp_country_code FROM settings WHERE user_id = $1', [req.userId]);
+  if (!settingsRows[0] || !settingsRows[0].whatsapp_country_code || !settingsRows[0].whatsapp_country_code.trim()) {
+    return res.status(400).json({ error: 'Set a WhatsApp country code in settings before sending messages' });
+  }
+
   const recipients = await buildRecipients(req, phones, !!unresponded_only);
   if (recipients.length === 0) {
     return res.status(400).json({ error: 'No recipients matched after filtering (already responded or marked do-not-send).' });

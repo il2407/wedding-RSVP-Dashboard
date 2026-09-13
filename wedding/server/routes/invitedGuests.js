@@ -49,10 +49,14 @@ async function upsertGuests(userId, rows) {
         errors.push({ line: index + 1, error: 'Missing name or phone' });
         continue;
       }
+      const parsedExpected = parseInt(expectedRaw, 10);
+      // Only fall back to 1 when the column was blank/unparseable — an explicit 0 (e.g. a
+      // +1 who declined in advance) must be preserved, not silently bumped up.
+      const expectedGuest = Number.isNaN(parsedExpected) ? 1 : parsedExpected;
       await client.query(
         `INSERT INTO invited_guests (user_id, phone, name, expected_guest, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $5)
          ON CONFLICT (user_id, phone) DO UPDATE SET name = $3, expected_guest = $4, updated_at = $5`,
-        [userId, String(phone).trim(), String(name).trim(), parseInt(expectedRaw, 10) || 1, now]
+        [userId, String(phone).trim(), String(name).trim(), expectedGuest, now]
       );
       imported += 1;
     }

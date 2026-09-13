@@ -68,6 +68,12 @@ router.post('/public/:userId/rsvps', async (req, res) => {
   if (!phone || guests === undefined) return res.status(400).json({ error: 'phone and guests are required' });
 
   const userId = req.params.userId;
+
+  // Guards against a mistyped/stale phone in the guest link silently creating an RSVP that
+  // getStats() (which joins on invited_guests) would then never count anywhere.
+  const { rows: guestRows } = await query('SELECT 1 FROM invited_guests WHERE user_id = $1 AND phone = $2', [userId, phone]);
+  if (!guestRows[0]) return res.status(404).json({ error: 'This phone number was not found on the guest list' });
+
   const timestamp = new Date().toISOString();
   const status = statusForGuestCount(guests);
   try {

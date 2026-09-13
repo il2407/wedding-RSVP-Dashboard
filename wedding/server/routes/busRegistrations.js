@@ -4,11 +4,19 @@ const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Bus seats are booked in a handful at a time, never a whole busload by one registrant, so
+// counts are clamped to a sane range rather than trusting the client's raw number as-is.
+function clampCount(value, fallback) {
+  const n = parseInt(value, 10);
+  if (Number.isNaN(n)) return fallback;
+  return Math.min(Math.max(n, 0), 20);
+}
+
 function readFields(body, fallback = {}) {
   return {
     full_name: body.full_name ?? fallback.full_name,
-    going_count: body.going_count ?? fallback.going_count ?? 0,
-    return_count: body.return_count ?? fallback.return_count ?? 0,
+    going_count: body.going_count !== undefined ? clampCount(body.going_count, fallback.going_count ?? 0) : (fallback.going_count ?? 0),
+    return_count: body.return_count !== undefined ? clampCount(body.return_count, fallback.return_count ?? 0) : (fallback.return_count ?? 0),
     going_confirmed: body.going_confirmed !== undefined ? (body.going_confirmed ? 1 : 0) : (fallback.going_confirmed ?? 0),
     return_confirmed: body.return_confirmed !== undefined ? (body.return_confirmed ? 1 : 0) : (fallback.return_confirmed ?? 0),
   };
