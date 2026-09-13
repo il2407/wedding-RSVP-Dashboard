@@ -56,6 +56,24 @@ router.post('/auth/login', async (req, res) => {
   res.json({ id: user.id, email: user.email });
 });
 
+router.post('/auth/reset-password', async (req, res) => {
+  const { email, newPassword } = req.body;
+  if (!email || !newPassword) return res.status(400).json({ error: 'email and newPassword are required' });
+  if (newPassword.length < MIN_PASSWORD_LENGTH) {
+    return res.status(400).json({ error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` });
+  }
+
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const user = db.prepare('SELECT id FROM users WHERE email = ?').get(normalizedEmail);
+  if (!user) return res.status(404).json({ error: 'No account found with this email' });
+
+  const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+  db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, user.id);
+
+  setSessionCookie(res, user.id);
+  res.json({ id: user.id, email: normalizedEmail });
+});
+
 router.post('/auth/logout', (req, res) => {
   clearSessionCookie(res);
   res.status(204).end();

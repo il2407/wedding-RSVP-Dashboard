@@ -91,6 +91,22 @@
     .switch-link a { color: #ea580c; font-weight: 600; text-decoration: none; }
     .switch-link a:hover { text-decoration: underline; }
 
+    .forgot-link {
+      display: block;
+      text-align: left;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      background: none;
+      border: none;
+      padding: 0;
+      color: #ea580c;
+      font-weight: 600;
+      cursor: pointer;
+      width: auto;
+    }
+
+    .forgot-link:hover { text-decoration: underline; }
+
     .google-signin-container {
       display: flex;
       justify-content: center;
@@ -132,8 +148,20 @@
       <input type="email" id="email" name="email" required autocomplete="email">
       <label for="password">סיסמה</label>
       <input type="password" id="password" name="password" required autocomplete="current-password">
+      <button type="button" id="forgot-link" class="forgot-link">שכחת סיסמה?</button>
       <button type="submit">התחברות</button>
       <div id="status" class="status-msg" role="status" aria-live="polite"></div>
+    </form>
+    <form id="reset-form" style="display:none;">
+      <label for="reset-email">אימייל</label>
+      <input type="email" id="reset-email" name="email" required autocomplete="email">
+      <label for="reset-password">סיסמה חדשה</label>
+      <input type="password" id="reset-password" name="newPassword" required autocomplete="new-password" minlength="8">
+      <label for="reset-password-confirm">אימות סיסמה</label>
+      <input type="password" id="reset-password-confirm" name="newPasswordConfirm" required autocomplete="new-password" minlength="8">
+      <button type="submit">איפוס סיסמה</button>
+      <button type="button" id="back-to-login-link" class="forgot-link">חזרה להתחברות</button>
+      <div id="reset-status" class="status-msg" role="status" aria-live="polite"></div>
     </form>
     <div class="switch-link">
       אין לך חשבון? <a href="/signup/">הרשמה</a>
@@ -207,6 +235,59 @@
 
         const data = await res.json().catch(() => ({}));
         statusEl.textContent = data.error || 'שגיאה בהתחברות';
+        statusEl.className = 'status-msg error';
+      } catch (err) {
+        statusEl.textContent = 'שגיאת רשת, נסו שוב';
+        statusEl.className = 'status-msg error';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    document.getElementById('forgot-link').addEventListener('click', () => {
+      document.getElementById('login-form').style.display = 'none';
+      document.getElementById('reset-form').style.display = 'block';
+      document.getElementById('reset-email').value = document.getElementById('email').value;
+    });
+
+    document.getElementById('back-to-login-link').addEventListener('click', () => {
+      document.getElementById('reset-form').style.display = 'none';
+      document.getElementById('login-form').style.display = 'block';
+    });
+
+    document.getElementById('reset-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const statusEl = document.getElementById('reset-status');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      statusEl.textContent = '';
+      statusEl.className = 'status-msg';
+
+      const newPassword = document.getElementById('reset-password').value;
+      const confirmPassword = document.getElementById('reset-password-confirm').value;
+      if (newPassword !== confirmPassword) {
+        statusEl.textContent = 'הסיסמאות אינן תואמות';
+        statusEl.className = 'status-msg error';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      try {
+        const res = await fetch('/api/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('reset-email').value,
+            newPassword,
+          }),
+        });
+
+        if (res.ok) {
+          window.location.href = '/admin/';
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+        statusEl.textContent = data.error || 'שגיאה באיפוס הסיסמה';
         statusEl.className = 'status-msg error';
       } catch (err) {
         statusEl.textContent = 'שגיאת רשת, נסו שוב';
