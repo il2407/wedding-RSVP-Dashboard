@@ -310,7 +310,7 @@
       <a href="/admin/" class="admin-nav-link active" aria-current="page"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#settings"></use></svg>ניהול האירוע</a>
       <a href="/bulk-messaging/" class="admin-nav-link"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#message"></use></svg>הודעות לאורחים</a>
       <a href="#" class="admin-nav-link admin-nav-logout" id="logout-link"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#exit"></use></svg>יציאה מהחשבון</a>
-    <div class="nav-note"><span dir="ltr">Made for your forever.</span><small>כל האנשים שלכם. במקום אחד.</small></div></nav>
+    <div class="nav-note"><span dir="ltr">Made for you.</span><small>כל המוזמנים שלכם. במקום אחד.</small></div></nav>
     <header class="page-heading" id="page-heading" tabindex="-1"><div><p class="eyebrow">THE DETAILS MAKE THE DAY</p><h1>ניהול האירוע</h1><p class="page-description">הפרטים הקטנים שהופכים את החתונה לשלכם.</p></div><span class="heading-seal" aria-hidden="true">&amp;</span></header>
 
     <div class="card">
@@ -412,7 +412,7 @@
           <option value="" selected disabled>בחרו תבנית או כתבו טקסט מותאם אישית למטה</option>
         </select>
         <label for="whatsapp_message_template">תבנית הודעת וואטסאפ (חובה לכלול {link})</label>
-        <textarea id="whatsapp_message_template" name="whatsapp_message_template" placeholder="השתמשו ב-{link} כדי להכניס את הקישור האישי"></textarea>
+        <textarea id="whatsapp_message_template" name="whatsapp_message_template" placeholder="השתמשו ב-{name} לשם המוזמן, {phone} למספר הטלפון, ו-{link} כדי להכניס את הקישור האישי"></textarea>
 
         <button type="submit">שמירת פרטי האירוע</button>
         <span id="config-status" class="status-msg"></span>
@@ -433,6 +433,9 @@
         <tbody></tbody>
       </table></div>
 
+      <button type="button" id="delete-all-btn" class="danger">מחיקת כל רשימת המוזמנים</button>
+      <span id="delete-all-status" class="status-msg"></span>
+
       <hr class="divider">
 
       <label for="single-name">הוספת מוזמן בודד</label>
@@ -441,6 +444,7 @@
         <input type="text" id="single-phone" aria-label="טלפון המוזמן" placeholder="טלפון" dir="ltr">
       </div>
       <button type="button" id="add-single-btn" class="secondary">הוספה</button>
+      <button type="button" id="cancel-edit-btn" class="secondary" style="display:none;">ביטול עריכה</button>
       <span id="single-add-status" class="status-msg"></span>
 
       <hr class="divider">
@@ -492,7 +496,7 @@
     const TEMPLATE_PRESETS = [
       {
         label: 'חמה ואישית',
-        text: 'היי! 🎉 מוזמנים לחתונה שלנו! נשמח לראותכם 💕\nלאישור הגעה, לחצו כאן: {link}',
+        text: 'היי {name}! 🎉 מוזמנים לחתונה שלנו! נשמח לראותכם 💕\nלאישור הגעה, לחצו כאן: {link}',
       },
       {
         label: 'רשמית',
@@ -656,15 +660,35 @@
 
       guests.forEach((guest) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${guest.name}</td>
-          <td>${guest.phone}</td>
-          <td>${guest.expected_guest}</td>
-          <td>
-            <button type="button" class="secondary copy-link-btn" data-phone="${guest.phone}">העתקת קישור</button>
-            <button type="button" class="danger" data-phone="${guest.phone}">מחיקה</button>
-          </td>
-        `;
+        const nameTd = document.createElement('td');
+        nameTd.textContent = guest.name;
+        const phoneTd = document.createElement('td');
+        phoneTd.textContent = guest.phone;
+        const expectedTd = document.createElement('td');
+        expectedTd.textContent = guest.expected_guest;
+        const actionsTd = document.createElement('td');
+
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'secondary';
+        editBtn.dataset.phone = guest.phone;
+        editBtn.dataset.name = guest.name;
+        editBtn.textContent = 'עריכה';
+
+        const copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.className = 'secondary copy-link-btn';
+        copyBtn.dataset.phone = guest.phone;
+        copyBtn.textContent = 'העתקת קישור';
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'danger';
+        deleteBtn.dataset.phone = guest.phone;
+        deleteBtn.textContent = 'מחיקה';
+
+        actionsTd.append(editBtn, copyBtn, deleteBtn);
+        tr.append(nameTd, phoneTd, expectedTd, actionsTd);
         tbody.appendChild(tr);
       });
 
@@ -689,7 +713,33 @@
           await loadGuests();
         });
       });
+
+      tbody.querySelectorAll('button.secondary[data-name]').forEach((btn) => {
+        btn.addEventListener('click', () => startEditGuest(btn.dataset.phone, btn.dataset.name));
+      });
     }
+
+    // --- Edit guest ---
+    let editingOriginalPhone = null;
+
+    function startEditGuest(phone, name) {
+      editingOriginalPhone = phone;
+      document.getElementById('single-name').value = name;
+      document.getElementById('single-phone').value = phone;
+      document.getElementById('add-single-btn').textContent = 'עדכון מוזמן';
+      document.getElementById('cancel-edit-btn').style.display = 'inline-block';
+      document.getElementById('single-name').focus();
+    }
+
+    function stopEditGuest() {
+      editingOriginalPhone = null;
+      document.getElementById('single-name').value = '';
+      document.getElementById('single-phone').value = '';
+      document.getElementById('add-single-btn').textContent = 'הוספה';
+      document.getElementById('cancel-edit-btn').style.display = 'none';
+    }
+
+    document.getElementById('cancel-edit-btn').addEventListener('click', stopEditGuest);
 
     document.getElementById('add-single-btn').addEventListener('click', async () => {
       const statusEl = document.getElementById('single-add-status');
@@ -700,20 +750,44 @@
         return;
       }
 
-      const res = await fetch('/api/invited-guests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, expected_guest: 1 }),
-      });
+      let res;
+      if (editingOriginalPhone) {
+        res = await fetch(`/api/invited-guests/${encodeURIComponent(editingOriginalPhone)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone }),
+        });
+      } else {
+        res = await fetch('/api/invited-guests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone, expected_guest: 1 }),
+        });
+      }
 
       if (res.ok) {
-        showStatus(statusEl, 'המוזמן נוסף בהצלחה', true);
-        document.getElementById('single-name').value = '';
-        document.getElementById('single-phone').value = '';
+        showStatus(statusEl, editingOriginalPhone ? 'המוזמן עודכן בהצלחה' : 'המוזמן נוסף בהצלחה', true);
+        stopEditGuest();
         await loadGuests();
+      } else if (res.status === 409) {
+        showStatus(statusEl, 'קיים כבר מוזמן אחר עם מספר הטלפון הזה', false);
       } else {
         const data = await res.json().catch(() => ({}));
-        showStatus(statusEl, data.error || 'שגיאה בהוספת מוזמן', false);
+        showStatus(statusEl, data.error || (editingOriginalPhone ? 'שגיאה בעדכון מוזמן' : 'שגיאה בהוספת מוזמן'), false);
+      }
+    });
+
+    document.getElementById('delete-all-btn').addEventListener('click', async () => {
+      const statusEl = document.getElementById('delete-all-status');
+      if (!confirm('פעולה זו תמחק את כל רשימת המוזמנים לצמיתות. להמשיך?')) return;
+      if (!confirm('אישור סופי: למחוק את כל המוזמנים? לא ניתן לשחזר פעולה זו.')) return;
+
+      const res = await fetch('/api/invited-guests', { method: 'DELETE' });
+      if (res.ok) {
+        showStatus(statusEl, 'כל רשימת המוזמנים נמחקה', true);
+        await loadGuests();
+      } else {
+        showStatus(statusEl, 'שגיאה במחיקת הרשימה', false);
       }
     });
 

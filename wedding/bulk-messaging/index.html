@@ -211,7 +211,7 @@
 <body class="workspace-page bulk-messaging-page">
   <a class="skip-to-content" href="#page-heading">דילוג לתוכן</a>
     <div class="container" id="main-content" role="main" tabindex="-1">
-        <nav class="admin-nav" aria-label="ניווט ראשי"><div class="brand" dir="ltr"><span class="brand-mark" aria-hidden="true">&amp;</span><div><strong>ever after</strong><span class="brand-caption">WEDDING RSVP</span></div></div><span class="nav-caption">החתונה שלכם</span>
+        <nav class="admin-nav" aria-label="ניווט ראשי"><div class="brand" dir="ltr"><span class="brand-mark" aria-hidden="true">&amp;</span><div><strong>Chenquieh</strong><span class="brand-caption">WEDDING RSVP</span></div></div><span class="nav-caption">החתונה שלכם</span>
             <a href="/dashboard/" class="admin-nav-link"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#grid"></use></svg>סקירה כללית</a>
             <a href="/admin/" class="admin-nav-link"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#settings"></use></svg>ניהול האירוע</a>
             <a href="/bulk-messaging/" class="admin-nav-link active" aria-current="page"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#message"></use></svg>הודעות לאורחים</a>
@@ -372,7 +372,7 @@
 
         function buildPersonalizedLink(baseUrl, phone) {
             const separator = baseUrl.includes('?') ? '&' : '?';
-            return `${baseUrl}${separator}u=${currentUserId}&phone=${phone}`;
+            return `${baseUrl}${separator}u=${currentUserId}&phone=${encodeURIComponent(phone)}`;
         }
 
         function previewMessages() {

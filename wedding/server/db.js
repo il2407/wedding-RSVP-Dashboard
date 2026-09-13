@@ -25,6 +25,14 @@ if (process.env.NODE_ENV === 'test') {
     ? { rejectUnauthorized: false }
     : undefined;
   pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl });
+  // Some hosted Postgres instances default a role/database to a non-UTF8 client_encoding,
+  // which silently mangles multi-byte characters (e.g. emoji) on write/read. Force UTF8
+  // on every new connection so this can't depend on the server's default.
+  pool.on('connect', (client) => {
+    client.query("SET client_encoding TO 'UTF8'").catch((err) => {
+      console.error('Failed to set client_encoding', err);
+    });
+  });
 }
 
 const ready = pool.query(schema).catch((err) => {

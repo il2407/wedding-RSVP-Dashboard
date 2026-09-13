@@ -37,6 +37,14 @@ function splitCsvLine(line) {
   return fields;
 }
 
+// Undoes the ="<phone>" Excel "force text" wrapper our own CSV export writes (so leading
+// zeros survive opening in Excel). Re-importing that exported file would otherwise feed the
+// literal wrapper — quotes and all — back in as the phone number.
+function stripExcelTextWrapper(value) {
+  const match = /^="(.*)"$/.exec(value);
+  return match ? match[1] : value;
+}
+
 async function upsertGuests(userId, rows) {
   const now = new Date().toISOString();
   let imported = 0;
@@ -53,10 +61,11 @@ async function upsertGuests(userId, rows) {
       // Only fall back to 1 when the column was blank/unparseable — an explicit 0 (e.g. a
       // +1 who declined in advance) must be preserved, not silently bumped up.
       const expectedGuest = Number.isNaN(parsedExpected) ? 1 : parsedExpected;
+      const cleanPhone = stripExcelTextWrapper(String(phone).trim());
       await client.query(
         `INSERT INTO invited_guests (user_id, phone, name, expected_guest, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $5)
          ON CONFLICT (user_id, phone) DO UPDATE SET name = $3, expected_guest = $4, updated_at = $5`,
-        [userId, String(phone).trim(), String(name).trim(), expectedGuest, now]
+        [userId, cleanPhone, String(name).trim(), expectedGuest, now]
       );
       imported += 1;
     }
@@ -100,25 +109,45 @@ router.put('/invited-guests/:phone', requireAuth, async (req, res) => {
   const existing = existingRows[0];
   if (!existing) return res.status(404).json({ error: 'Not found' });
 
-  const { name, expected_guest, do_not_send } = req.body;
-  await query(
-    'UPDATE invited_guests SET name = $1, expected_guest = $2, do_not_send = $3, updated_at = $4 WHERE user_id = $5 AND phone = $6',
-    [
-      name ?? existing.name,
-      expected_guest ?? existing.expected_guest,
-      do_not_send === undefined ? existing.do_not_send : (do_not_send ? 1 : 0),
-      new Date().toISOString(),
-      req.userId,
-      req.params.phone,
-    ]
-  );
+  const { name, phone, expected_guest, do_not_send } = req.body;
+  const newPhone = phone === undefined || phone === null || phone === '' ? existing.phone : String(phone).trim();
 
-  const { rows } = await query('SELECT * FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.userId, req.params.phone]);
+  if (newPhone !== existing.phone) {
+    const { rows: conflictRows } = await query('SELECT id FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.userId, newPhone]);
+    if (conflictRows[0]) return res.status(409).json({ error: 'Another guest already has that phone number' });
+  }
+
+  try {
+    await query(
+      'UPDATE invited_guests SET phone = $1, name = $2, expected_guest = $3, do_not_send = $4, updated_at = $5 WHERE user_id = $6 AND phone = $7',
+      [
+        newPhone,
+        name ?? existing.name,
+        expected_guest ?? existing.expected_guest,
+        do_not_send === undefined ? existing.do_not_send : (do_not_send ? 1 : 0),
+        new Date().toISOString(),
+        req.userId,
+        req.params.phone,
+      ]
+    );
+  } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'Another guest already has that phone number' });
+    throw err;
+  }
+
+  const { rows } = await query('SELECT * FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.userId, newPhone]);
   res.json(rows[0]);
 });
 
 router.delete('/invited-guests/:phone', requireAuth, async (req, res) => {
   await query('DELETE FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.userId, req.params.phone]);
+  res.status(204).end();
+});
+
+// Deletes every invited guest for this account in one action (used by the admin "Delete All"
+// button). Scoped to req.userId so it can never touch another account's guest list.
+router.delete('/invited-guests', requireAuth, async (req, res) => {
+  await query('DELETE FROM invited_guests WHERE user_id = $1', [req.userId]);
   res.status(204).end();
 });
 

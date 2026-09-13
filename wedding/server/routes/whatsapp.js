@@ -30,7 +30,7 @@ async function buildRecipients(req, phones, unresponsedOnly) {
   return eligible.map((g) => ({
     phone: g.phone,
     name: g.name || '',
-    link: `${baseUrl}?u=${req.userId}&phone=${g.phone}`,
+    link: `${baseUrl}?u=${req.userId}&phone=${encodeURIComponent(g.phone)}`,
   }));
 }
 
