@@ -1,5 +1,5 @@
 const express = require('express');
-const { db } = require('../db');
+const { query } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -14,19 +14,22 @@ function readFields(body, fallback = {}) {
   };
 }
 
-router.get('/bus-registrations', requireAuth, (req, res) => {
-  res.json(db.prepare('SELECT * FROM bus_registrations WHERE user_id = ? ORDER BY updated_at DESC').all(req.userId));
+router.get('/bus-registrations', requireAuth, async (req, res) => {
+  const { rows } = await query('SELECT * FROM bus_registrations WHERE user_id = $1 ORDER BY updated_at DESC', [req.userId]);
+  res.json(rows);
 });
 
-router.get('/public/:userId/bus-registrations/:phone', (req, res) => {
-  const row = db
-    .prepare('SELECT * FROM bus_registrations WHERE user_id = ? AND phone = ?')
-    .get(req.params.userId, req.params.phone);
+router.get('/public/:userId/bus-registrations/:phone', async (req, res) => {
+  const { rows } = await query(
+    'SELECT * FROM bus_registrations WHERE user_id = $1 AND phone = $2',
+    [req.params.userId, req.params.phone]
+  );
+  const row = rows[0];
   if (!row) return res.status(404).json({ error: 'Not found' });
   res.json(row);
 });
 
-router.post('/public/:userId/bus-registrations', (req, res) => {
+router.post('/public/:userId/bus-registrations', async (req, res) => {
   const { phone } = req.body;
   if (!phone) return res.status(400).json({ error: 'phone is required' });
   const fields = readFields(req.body);
@@ -35,32 +38,38 @@ router.post('/public/:userId/bus-registrations', (req, res) => {
   const userId = req.params.userId;
   const updated_at = new Date().toISOString();
   try {
-    db.prepare(
+    await query(
       `INSERT INTO bus_registrations (user_id, full_name, phone, going_count, return_count, going_confirmed, return_confirmed, updated_at)
-       VALUES (@user_id, @full_name, @phone, @going_count, @return_count, @going_confirmed, @return_confirmed, @updated_at)`
-    ).run({ ...fields, user_id: userId, phone, updated_at });
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [userId, fields.full_name, phone, fields.going_count, fields.return_count, fields.going_confirmed, fields.return_confirmed, updated_at]
+    );
   } catch (err) {
     return res.status(409).json({ error: 'Registration already exists for this phone' });
   }
-  res.status(201).json(db.prepare('SELECT * FROM bus_registrations WHERE user_id = ? AND phone = ?').get(userId, phone));
+  const { rows } = await query('SELECT * FROM bus_registrations WHERE user_id = $1 AND phone = $2', [userId, phone]);
+  res.status(201).json(rows[0]);
 });
 
-router.put('/public/:userId/bus-registrations/:phone', (req, res) => {
+router.put('/public/:userId/bus-registrations/:phone', async (req, res) => {
   const userId = req.params.userId;
-  const existing = db
-    .prepare('SELECT * FROM bus_registrations WHERE user_id = ? AND phone = ?')
-    .get(userId, req.params.phone);
+  const { rows: existingRows } = await query(
+    'SELECT * FROM bus_registrations WHERE user_id = $1 AND phone = $2',
+    [userId, req.params.phone]
+  );
+  const existing = existingRows[0];
   if (!existing) return res.status(404).json({ error: 'Not found' });
 
   const fields = readFields(req.body, existing);
   const updated_at = new Date().toISOString();
-  db.prepare(
-    `UPDATE bus_registrations SET full_name = @full_name, going_count = @going_count, return_count = @return_count,
-     going_confirmed = @going_confirmed, return_confirmed = @return_confirmed, updated_at = @updated_at
-     WHERE user_id = @user_id AND phone = @phone`
-  ).run({ ...fields, user_id: userId, phone: req.params.phone, updated_at });
+  await query(
+    `UPDATE bus_registrations SET full_name = $1, going_count = $2, return_count = $3,
+     going_confirmed = $4, return_confirmed = $5, updated_at = $6
+     WHERE user_id = $7 AND phone = $8`,
+    [fields.full_name, fields.going_count, fields.return_count, fields.going_confirmed, fields.return_confirmed, updated_at, userId, req.params.phone]
+  );
 
-  res.json(db.prepare('SELECT * FROM bus_registrations WHERE user_id = ? AND phone = ?').get(userId, req.params.phone));
+  const { rows } = await query('SELECT * FROM bus_registrations WHERE user_id = $1 AND phone = $2', [userId, req.params.phone]);
+  res.json(rows[0]);
 });
 
 module.exports = router;

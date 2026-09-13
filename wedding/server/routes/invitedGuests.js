@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const ExcelJS = require('exceljs');
-const { db } = require('../db');
+const { query, withTransaction } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -37,92 +37,88 @@ function splitCsvLine(line) {
   return fields;
 }
 
-function upsertGuests(userId, rows) {
+async function upsertGuests(userId, rows) {
   const now = new Date().toISOString();
-  const upsert = db.prepare(
-    `INSERT INTO invited_guests (user_id, phone, name, expected_guest, created_at, updated_at) VALUES (@user_id, @phone, @name, @expected_guest, @now, @now)
-     ON CONFLICT(user_id, phone) DO UPDATE SET name = @name, expected_guest = @expected_guest, updated_at = @now`
-  );
-
   let imported = 0;
   const errors = [];
 
-  const runAll = db.transaction((items) => {
-    items.forEach((item, index) => {
-      const { name, phone, expected_guest: expectedRaw } = item;
+  await withTransaction(async (client) => {
+    for (let index = 0; index < rows.length; index += 1) {
+      const { name, phone, expected_guest: expectedRaw } = rows[index];
       if (!name || !phone) {
         errors.push({ line: index + 1, error: 'Missing name or phone' });
-        return;
+        continue;
       }
-      upsert.run({
-        user_id: userId,
-        phone: String(phone).trim(),
-        name: String(name).trim(),
-        expected_guest: parseInt(expectedRaw, 10) || 1,
-        now,
-      });
+      await client.query(
+        `INSERT INTO invited_guests (user_id, phone, name, expected_guest, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $5)
+         ON CONFLICT (user_id, phone) DO UPDATE SET name = $3, expected_guest = $4, updated_at = $5`,
+        [userId, String(phone).trim(), String(name).trim(), parseInt(expectedRaw, 10) || 1, now]
+      );
       imported += 1;
-    });
+    }
   });
 
-  runAll(rows);
   return { imported, errors };
 }
 
-router.get('/public/:userId/invited-guests/:phone', (req, res) => {
-  const guest = db
-    .prepare('SELECT * FROM invited_guests WHERE user_id = ? AND phone = ?')
-    .get(req.params.userId, req.params.phone);
+router.get('/public/:userId/invited-guests/:phone', async (req, res) => {
+  const { rows } = await query('SELECT * FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.params.userId, req.params.phone]);
+  const guest = rows[0];
   if (!guest) return res.status(404).json({ error: 'Not found' });
   res.json(guest);
 });
 
-router.get('/invited-guests', requireAuth, (req, res) => {
-  res.json(db.prepare('SELECT * FROM invited_guests WHERE user_id = ? ORDER BY name').all(req.userId));
+router.get('/invited-guests', requireAuth, async (req, res) => {
+  const { rows } = await query('SELECT * FROM invited_guests WHERE user_id = $1 ORDER BY name', [req.userId]);
+  res.json(rows);
 });
 
-router.post('/invited-guests', requireAuth, (req, res) => {
+router.post('/invited-guests', requireAuth, async (req, res) => {
   const { phone, name, expected_guest, do_not_send } = req.body;
   if (!phone || !name) return res.status(400).json({ error: 'phone and name are required' });
 
   const now = new Date().toISOString();
   try {
-    db.prepare(
-      'INSERT INTO invited_guests (user_id, phone, name, expected_guest, do_not_send, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
-    ).run(req.userId, phone, name, expected_guest ?? 1, do_not_send ? 1 : 0, now, now);
+    await query(
+      'INSERT INTO invited_guests (user_id, phone, name, expected_guest, do_not_send, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $6)',
+      [req.userId, phone, name, expected_guest ?? 1, do_not_send ? 1 : 0, now]
+    );
   } catch (err) {
-    return res.status(409).json({ error: 'Phone already exists' });
+    if (err.code === '23505') return res.status(409).json({ error: 'Phone already exists' });
+    throw err;
   }
-  res.status(201).json(db.prepare('SELECT * FROM invited_guests WHERE user_id = ? AND phone = ?').get(req.userId, phone));
+  const { rows } = await query('SELECT * FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.userId, phone]);
+  res.status(201).json(rows[0]);
 });
 
-router.put('/invited-guests/:phone', requireAuth, (req, res) => {
-  const existing = db
-    .prepare('SELECT * FROM invited_guests WHERE user_id = ? AND phone = ?')
-    .get(req.userId, req.params.phone);
+router.put('/invited-guests/:phone', requireAuth, async (req, res) => {
+  const { rows: existingRows } = await query('SELECT * FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.userId, req.params.phone]);
+  const existing = existingRows[0];
   if (!existing) return res.status(404).json({ error: 'Not found' });
 
   const { name, expected_guest, do_not_send } = req.body;
-  db.prepare(
-    'UPDATE invited_guests SET name = ?, expected_guest = ?, do_not_send = ?, updated_at = ? WHERE user_id = ? AND phone = ?'
-  ).run(
-    name ?? existing.name,
-    expected_guest ?? existing.expected_guest,
-    do_not_send === undefined ? existing.do_not_send : (do_not_send ? 1 : 0),
-    new Date().toISOString(),
-    req.userId,
-    req.params.phone
+  await query(
+    'UPDATE invited_guests SET name = $1, expected_guest = $2, do_not_send = $3, updated_at = $4 WHERE user_id = $5 AND phone = $6',
+    [
+      name ?? existing.name,
+      expected_guest ?? existing.expected_guest,
+      do_not_send === undefined ? existing.do_not_send : (do_not_send ? 1 : 0),
+      new Date().toISOString(),
+      req.userId,
+      req.params.phone,
+    ]
   );
 
-  res.json(db.prepare('SELECT * FROM invited_guests WHERE user_id = ? AND phone = ?').get(req.userId, req.params.phone));
+  const { rows } = await query('SELECT * FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.userId, req.params.phone]);
+  res.json(rows[0]);
 });
 
-router.delete('/invited-guests/:phone', requireAuth, (req, res) => {
-  db.prepare('DELETE FROM invited_guests WHERE user_id = ? AND phone = ?').run(req.userId, req.params.phone);
+router.delete('/invited-guests/:phone', requireAuth, async (req, res) => {
+  await query('DELETE FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.userId, req.params.phone]);
   res.status(204).end();
 });
 
-router.post('/invited-guests/bulk-import', requireAuth, (req, res) => {
+router.post('/invited-guests/bulk-import', requireAuth, async (req, res) => {
   const { text } = req.body;
   if (typeof text !== 'string') return res.status(400).json({ error: 'text is required' });
 
@@ -135,7 +131,7 @@ router.post('/invited-guests/bulk-import', requireAuth, (req, res) => {
       return { name, phone, expected_guest };
     });
 
-  res.json(upsertGuests(req.userId, rows));
+  res.json(await upsertGuests(req.userId, rows));
 });
 
 function normalizeCell(value) {
@@ -216,7 +212,7 @@ router.post('/invited-guests/upload', requireAuth, (req, res) => {
       return res.status(400).json({ error: 'Could not parse file. Expected a CSV or XLSX with name/phone columns.' });
     }
 
-    res.json(upsertGuests(req.userId, rows));
+    res.json(await upsertGuests(req.userId, rows));
   });
 });
 
@@ -228,13 +224,12 @@ function csvField(value) {
   return str;
 }
 
-router.get('/invited-guests/export', requireAuth, (req, res) => {
-  const guests = db
-    .prepare('SELECT * FROM invited_guests WHERE user_id = ? ORDER BY name').all(req.userId);
-  const rsvpByPhone = new Map(
-    db.prepare('SELECT * FROM rsvps WHERE user_id = ?').all(req.userId).map((r) => [r.phone, r])
-  );
-  const settings = db.prepare('SELECT couple_name_1, couple_name_2 FROM settings WHERE user_id = ?').get(req.userId);
+router.get('/invited-guests/export', requireAuth, async (req, res) => {
+  const { rows: guests } = await query('SELECT * FROM invited_guests WHERE user_id = $1 ORDER BY name', [req.userId]);
+  const { rows: rsvpRows } = await query('SELECT * FROM rsvps WHERE user_id = $1', [req.userId]);
+  const rsvpByPhone = new Map(rsvpRows.map((r) => [r.phone, r]));
+  const { rows: settingsRows } = await query('SELECT couple_name_1, couple_name_2 FROM settings WHERE user_id = $1', [req.userId]);
+  const settings = settingsRows[0];
 
   const headers = [
     'שם', 'טלפון', 'סטטוס הזמנה', 'סטטוס אישור הגעה', 'מספר מגיעים', 'לשלוח הודעות', 'תאריך תגובה',

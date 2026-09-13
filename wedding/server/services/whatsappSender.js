@@ -1,4 +1,4 @@
-const { db } = require('../db');
+const { query } = require('../db');
 
 // undefined = not checked yet, false = checked and missing, client = ready to use.
 let twilioClient;
@@ -37,14 +37,16 @@ async function processJob(job) {
     return;
   }
 
-  const settings = db.prepare('SELECT whatsapp_country_code FROM settings WHERE user_id = ?').get(job.user_id);
+  const { rows: settingsRows } = await query('SELECT whatsapp_country_code FROM settings WHERE user_id = $1', [job.user_id]);
+  const settings = settingsRows[0];
   const countryCode = settings ? settings.whatsapp_country_code : '';
 
-  db.prepare("UPDATE whatsapp_jobs SET status = 'sending' WHERE id = ?").run(job.id);
+  await query("UPDATE whatsapp_jobs SET status = 'sending' WHERE id = $1", [job.id]);
 
-  const recipients = db
-    .prepare("SELECT * FROM whatsapp_job_recipients WHERE job_id = ? AND status = 'pending'")
-    .all(job.id);
+  const { rows: recipients } = await query(
+    "SELECT * FROM whatsapp_job_recipients WHERE job_id = $1 AND status = 'pending'",
+    [job.id]
+  );
 
   for (const recipient of recipients) {
     try {
@@ -53,20 +55,20 @@ async function processJob(job) {
         to: `whatsapp:+${toE164Digits(recipient.phone, countryCode)}`,
         body: recipient.message,
       });
-      db.prepare("UPDATE whatsapp_job_recipients SET status = 'sent', sent_at = ? WHERE id = ?").run(
-        new Date().toISOString(),
-        recipient.id
+      await query(
+        "UPDATE whatsapp_job_recipients SET status = 'sent', sent_at = $1 WHERE id = $2",
+        [new Date().toISOString(), recipient.id]
       );
     } catch (err) {
-      db.prepare("UPDATE whatsapp_job_recipients SET status = 'failed', error = ? WHERE id = ?").run(
-        err.message,
-        recipient.id
+      await query(
+        "UPDATE whatsapp_job_recipients SET status = 'failed', error = $1 WHERE id = $2",
+        [err.message, recipient.id]
       );
     }
     await sleep(SEND_DELAY_MS);
   }
 
-  db.prepare("UPDATE whatsapp_jobs SET status = 'completed' WHERE id = ?").run(job.id);
+  await query("UPDATE whatsapp_jobs SET status = 'completed' WHERE id = $1", [job.id]);
 }
 
 let isRunning = false;
@@ -78,9 +80,10 @@ async function runDueJobs() {
   if (isRunning) return;
   isRunning = true;
   try {
-    const dueJobs = db
-      .prepare("SELECT * FROM whatsapp_jobs WHERE status IN ('pending', 'sending') AND scheduled_at <= ?")
-      .all(new Date().toISOString());
+    const { rows: dueJobs } = await query(
+      "SELECT * FROM whatsapp_jobs WHERE status IN ('pending', 'sending') AND scheduled_at <= $1",
+      [new Date().toISOString()]
+    );
 
     for (const job of dueJobs) {
       await processJob(job);

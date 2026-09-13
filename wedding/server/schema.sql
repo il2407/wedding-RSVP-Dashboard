@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   google_sub TEXT UNIQUE,
@@ -22,11 +22,12 @@ CREATE TABLE IF NOT EXISTS settings (
   whatsapp_message_template TEXT NOT NULL DEFAULT '',
   whatsapp_country_code TEXT NOT NULL DEFAULT '',
   theme_color TEXT NOT NULL DEFAULT '#f97316',
+  rsvp_design TEXT NOT NULL DEFAULT '{}',
   updated_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS invited_guests (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id),
   phone TEXT NOT NULL,
   name TEXT NOT NULL,
@@ -39,7 +40,7 @@ CREATE TABLE IF NOT EXISTS invited_guests (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_invited_guests_user_phone ON invited_guests(user_id, phone);
 
 CREATE TABLE IF NOT EXISTS rsvps (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id),
   phone TEXT NOT NULL,
   guests INTEGER NOT NULL,
@@ -51,7 +52,7 @@ CREATE TABLE IF NOT EXISTS rsvps (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_rsvps_user_phone ON rsvps(user_id, phone);
 
 CREATE TABLE IF NOT EXISTS bus_registrations (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id),
   full_name TEXT NOT NULL,
   phone TEXT NOT NULL,
@@ -65,7 +66,7 @@ CREATE TABLE IF NOT EXISTS bus_registrations (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_bus_registrations_user_phone ON bus_registrations(user_id, phone);
 
 CREATE TABLE IF NOT EXISTS media (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id),
   slot TEXT NOT NULL,
   filename TEXT NOT NULL,
@@ -76,7 +77,7 @@ CREATE TABLE IF NOT EXISTS media (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_media_user_slot ON media(user_id, slot);
 
 CREATE TABLE IF NOT EXISTS whatsapp_jobs (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id),
   message_template TEXT NOT NULL,
   scheduled_at TEXT NOT NULL,
@@ -87,7 +88,7 @@ CREATE TABLE IF NOT EXISTS whatsapp_jobs (
 CREATE INDEX IF NOT EXISTS idx_whatsapp_jobs_due ON whatsapp_jobs(status, scheduled_at);
 
 CREATE TABLE IF NOT EXISTS whatsapp_job_recipients (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   job_id INTEGER NOT NULL REFERENCES whatsapp_jobs(id),
   phone TEXT NOT NULL,
   name TEXT NOT NULL DEFAULT '',

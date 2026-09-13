@@ -1,7 +1,7 @@
-const { db } = require('../db');
+const { query } = require('../db');
 
 const COOKIE_NAME = 'sid';
-const COOKIE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const COOKIE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 function setSessionCookie(res, userId) {
   res.cookie(COOKIE_NAME, String(userId), {
@@ -37,11 +37,16 @@ function requireAuthPage(req, res, next) {
   next();
 }
 
-function requireOnboarded(req, res, next) {
-  const settings = db.prepare('SELECT couple_name_1, couple_name_2 FROM settings WHERE user_id = ?').get(req.userId);
-  const onboarded = settings && settings.couple_name_1.trim() && settings.couple_name_2.trim();
-  if (!onboarded) return res.redirect('/onboarding/');
-  next();
+async function requireOnboarded(req, res, next) {
+  try {
+    const { rows } = await query('SELECT couple_name_1, couple_name_2 FROM settings WHERE user_id = $1', [req.userId]);
+    const settings = rows[0];
+    const onboarded = settings && settings.couple_name_1.trim() && settings.couple_name_2.trim();
+    if (!onboarded) return res.redirect('/onboarding/');
+    next();
+  } catch (err) {
+    next(err);
+  }
 }
 
 module.exports = {

@@ -5,7 +5,6 @@ const cookieParser = require('cookie-parser');
 
 const { requireAuthPage, requireOnboarded } = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
-const legacyRoutes = require('./routes/legacy');
 const configRoutes = require('./routes/config');
 const invitedGuestsRoutes = require('./routes/invitedGuests');
 const rsvpRoutes = require('./routes/rsvps');
@@ -19,7 +18,6 @@ app.use(express.json());
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
 app.use('/api', authRoutes);
-app.use('/api', legacyRoutes);
 app.use('/api', configRoutes);
 app.use('/api', invitedGuestsRoutes);
 app.use('/api', rsvpRoutes);

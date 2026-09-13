@@ -6,7 +6,7 @@ const path = require('node:path');
 const { DEFAULT_DESIGN, validateDesign } = require('../rsvpDesign');
 const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'invitation-design-'));
 process.env.DATA_DIR = dataDir;
-const { db } = require('../db');
+const { query, pool } = require('../db');
 
 test('design rejects invalid fields, colors, options and excessive text', () => {
   for (const input of [null, [], { background: 'red' }, { font: 'script' }, { title: 'a'.repeat(121) }, { unknown: 'x' }, { motion: true }, JSON.parse('{"__proto__":"x"}')]) {
@@ -22,8 +22,8 @@ test('config saves the design per account and exposes it to guests', async () =>
   app.use((req, res, next) => { req.signedCookies = { sid: '1' }; next(); });
   app.use(require('../routes/config'));
   for (const id of [1, 2]) {
-    db.prepare("INSERT INTO users (id,email,password_hash,created_at) VALUES (?,?,'x','now')").run(id, `${id}@test.local`);
-    db.prepare("INSERT INTO settings (user_id,updated_at) VALUES (?,'now')").run(id);
+    await query("INSERT INTO users (id,email,password_hash,created_at) VALUES ($1,$2,'x',$3)", [id, `${id}@test.local`, new Date().toISOString()]);
+    await query("INSERT INTO settings (user_id,updated_at) VALUES ($1,$2)", [id, new Date().toISOString()]);
   }
   const server = app.listen(0);
   await new Promise(resolve => server.once('listening', resolve));
@@ -31,7 +31,8 @@ test('config saves the design per account and exposes it to guests', async () =>
   try {
     const res = await fetch(`${url}/admin/config`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rsvp_design: { title: 'היום שלנו', photo_style: 'circle' } }) });
     assert.equal(res.status, 200);
-    assert.equal(JSON.parse(db.prepare('SELECT rsvp_design FROM settings WHERE user_id=1').get().rsvp_design).title, 'היום שלנו');
+    const { rows } = await query('SELECT rsvp_design FROM settings WHERE user_id=$1', [1]);
+    assert.equal(JSON.parse(rows[0].rsvp_design).title, 'היום שלנו');
     const publicConfig = await (await fetch(`${url}/public/1/config`)).json();
     assert.equal(publicConfig.rsvp_design.photo_style, 'circle');
     const other = await (await fetch(`${url}/public/2/config`)).json();
@@ -40,4 +41,4 @@ test('config saves the design per account and exposes it to guests', async () =>
     assert.equal(invalid.status, 400);
   } finally { await new Promise(resolve => server.close(resolve)); }
 });
-test.after(() => { db.close(); fs.rmSync(dataDir, { recursive: true, force: true }); });
+test.after(async () => { await pool.end(); fs.rmSync(dataDir, { recursive: true, force: true }); });
