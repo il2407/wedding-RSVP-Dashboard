@@ -249,11 +249,6 @@
             <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
         </div>
         
-        <!-- Next Chat Button - Always visible -->
-        <button id="next-chat-btn" class="send-btn" style="display: none; background: linear-gradient(135deg, #059669, #047857);" onclick="openNextChat()">
-            פתיחת השיחה הבאה
-        </button>
-
         <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e2e8f0;">
 
         <div class="form-group">
@@ -282,10 +277,10 @@
         // for the admin to configure here.
         const RSVP_BASE_URL = window.location.origin + '/rsvp-form/';
 
-        // wa.me links require the full international number with no leading zero and no
-        // "+" (e.g. 972501234567), while the guest list itself, the {phone} substitution,
-        // and the personalized RSVP link all keep using the phone number as typed (e.g.
-        // 0501234567) so it still matches what's stored for that guest.
+        // WhatsApp click-to-chat links require the full international number with no
+        // leading zero and no "+" (e.g. 972501234567), while the guest list itself, the
+        // {phone} substitution, and the personalized RSVP link all keep using the phone
+        // number as typed (e.g. 0501234567) so it still matches what's stored for that guest.
         function toWhatsAppNumber(phone) {
             const digits = phone.replace(/\D/g, '');
             if (countryCode && digits.startsWith(countryCode)) return digits;
@@ -469,7 +464,10 @@
                         .replace(/{phone}/g, cleanPhone)
                         .replace(/{link}/g, personalizedLink);
                     
-                    const whatsappUrl = `https://wa.me/${toWhatsAppNumber(cleanPhone)}?text=${encodeURIComponent(message)}`;
+                    // web.whatsapp.com (not wa.me/api.whatsapp.com) keeps this inside the browser
+                // tab instead of handing off to the WhatsApp Desktop native app, which is
+                // suspected of mangling percent-encoded 4-byte UTF-8 (emoji) during that hand-off.
+                const whatsappUrl = `https://web.whatsapp.com/send?phone=${toWhatsAppNumber(cleanPhone)}&text=${encodeURIComponent(message)}`;
                     whatsappUrls.push({
                         phone: cleanPhone,
                         url: whatsappUrl,
@@ -502,9 +500,9 @@
             optionsContainer.innerHTML = `
                 <h3 style="color: #ea580c; margin-bottom: 1rem;">WhatsApp Sending Options:</h3>
                 <div style="margin-bottom: 1rem;">
-                    <button onclick="openAllWhatsAppChats(${JSON.stringify(whatsappUrls).replace(/"/g, '&quot;')})" 
+                    <button onclick="openAllWhatsAppChats(${JSON.stringify(whatsappUrls).replace(/"/g, '&quot;')})"
                             style="background: linear-gradient(135deg, #f97316, #ea580c); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; margin-right: 0.5rem; cursor: pointer;">
-                        📱 Open WhatsApp Chats (One by One)
+                        📱 Open All WhatsApp Chats (${whatsappUrls.length})
                     </button>
                     <button onclick="copyAllMessages(${JSON.stringify(whatsappUrls).replace(/"/g, '&quot;')})" 
                             style="background: #6b7280; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; margin-right: 0.5rem; cursor: pointer;">
@@ -517,11 +515,9 @@
                 </div>
                 <div style="font-size: 0.9rem; color: #6b7280; background: #fef3c7; padding: 0.8rem; border-radius: 8px; border: 1px solid #f59e0b;">
                     <strong>📱 WhatsApp Instructions:</strong><br>
-                    • Click "Open WhatsApp Chats" to start<br>
-                    • Each chat will open one at a time<br>
-                    • Click "Next Chat" to open the next one<br>
-                    • Send the message in each chat window<br>
-                    • Allow popups if your browser asks
+                    • Click "Open All WhatsApp Chats" to open every chat window at once<br>
+                    • Your browser will likely ask to allow popups the first time — allow them, then click the button again<br>
+                    • Send the message in each chat window
                 </div>
             `;
             
@@ -530,49 +526,19 @@
         }
         
         function openAllWhatsAppChats(whatsappUrls) {
-            // Store the URLs globally for sequential opening
-            window.whatsappUrls = whatsappUrls;
-            window.currentIndex = 0;
-            
-            // Show the Next Chat button
-            const nextBtn = document.getElementById('next-chat-btn');
-            nextBtn.style.display = 'block';
-            nextBtn.disabled = false;
-            
-            // Start with the first one
-            openNextChat();
-        }
-        
-        function openNextChat() {
-            if (window.currentIndex >= window.whatsappUrls.length) {
-                showStatus('All WhatsApp chats have been opened!', 'success');
-                const nextBtn = document.getElementById('next-chat-btn');
-                nextBtn.style.display = 'none';
-                return;
-            }
-            
-            const currentItem = window.whatsappUrls[window.currentIndex];
-            const windowName = `whatsapp_${window.currentIndex}`;
-            
-            // Open the current chat
-            const popup = window.open(currentItem.url, windowName, 'width=600,height=800');
-            
-            if (popup) {
-                showStatus(`✅ Opened chat ${window.currentIndex + 1}/${window.whatsappUrls.length} for ${currentItem.phone}. Send the message, then click "Next Chat" below.`, 'success');
-                
-                // Update button text and increment index
-                const nextBtn = document.getElementById('next-chat-btn');
-                window.currentIndex++; // Move to next index
-                
-                if (window.currentIndex < window.whatsappUrls.length) {
-                    nextBtn.textContent = `➡️ Next Chat (${window.currentIndex + 1}/${window.whatsappUrls.length})`;
-                    nextBtn.disabled = false;
-                } else {
-                    nextBtn.textContent = '✅ All Done!';
-                    nextBtn.disabled = true;
-                }
+            // A browser only allows window.open() to bypass its popup blocker when called
+            // synchronously inside a real click handler — looping through every URL here
+            // (rather than one per later click) is what lets all of them open at once.
+            let blockedCount = 0;
+            whatsappUrls.forEach((item, index) => {
+                const popup = window.open(item.url, `whatsapp_${index}`, 'width=600,height=800');
+                if (!popup) blockedCount++;
+            });
+
+            if (blockedCount === 0) {
+                showStatus(`✅ Opened all ${whatsappUrls.length} WhatsApp chats. Send the message in each window.`, 'success');
             } else {
-                showStatus('❌ Popup blocked! Please allow popups and try again.', 'error');
+                showStatus(`⚠️ ${blockedCount}/${whatsappUrls.length} chats were blocked by the popup blocker. Allow popups for this site and click the button again.`, 'error');
             }
         }
         
