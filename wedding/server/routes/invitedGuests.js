@@ -135,19 +135,41 @@ router.put('/invited-guests/:phone', requireAuth, async (req, res) => {
     throw err;
   }
 
+  // Carry any existing RSVP over to the corrected phone number so it isn't left behind as a
+  // ghost row keyed to a phone no invited guest has anymore (visible in the raw RSVP list but
+  // excluded from getStats' joins). If the new phone already has its own RSVP, drop the old
+  // one instead of violating the (user_id, phone) unique index.
+  if (newPhone !== existing.phone) {
+    try {
+      await query('UPDATE rsvps SET phone = $1 WHERE user_id = $2 AND phone = $3', [newPhone, req.userId, existing.phone]);
+    } catch (err) {
+      if (err.code !== '23505') throw err;
+      await query('DELETE FROM rsvps WHERE user_id = $1 AND phone = $2', [req.userId, existing.phone]);
+    }
+  }
+
   const { rows } = await query('SELECT * FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.userId, newPhone]);
   res.json(rows[0]);
 });
 
 router.delete('/invited-guests/:phone', requireAuth, async (req, res) => {
-  await query('DELETE FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.userId, req.params.phone]);
+  // There's no FK/cascade between the tables, so their rsvp must be deleted alongside them —
+  // otherwise it lingers as a ghost row: invisible to getStats' joins but still returned by
+  // GET /api/rsvps, rendering with a blank name once its guest is gone.
+  await withTransaction(async (client) => {
+    await client.query('DELETE FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.userId, req.params.phone]);
+    await client.query('DELETE FROM rsvps WHERE user_id = $1 AND phone = $2', [req.userId, req.params.phone]);
+  });
   res.status(204).end();
 });
 
 // Deletes every invited guest for this account in one action (used by the admin "Delete All"
 // button). Scoped to req.userId so it can never touch another account's guest list.
 router.delete('/invited-guests', requireAuth, async (req, res) => {
-  await query('DELETE FROM invited_guests WHERE user_id = $1', [req.userId]);
+  await withTransaction(async (client) => {
+    await client.query('DELETE FROM invited_guests WHERE user_id = $1', [req.userId]);
+    await client.query('DELETE FROM rsvps WHERE user_id = $1', [req.userId]);
+  });
   res.status(204).end();
 });
 
@@ -177,14 +199,23 @@ function normalizeCell(value) {
   return value;
 }
 
+// Column headers recognized in either our own template (English) or our own CSV export
+// (Hebrew, see the /invited-guests/export headers below) — so re-importing an exported file
+// matches guests up by column instead of importing the header row itself as a guest.
+const NAME_HEADERS = ['name', 'שם'];
+const PHONE_HEADERS = ['phone', 'טלפון'];
+const EXPECTED_HEADERS = ['מספר מגיעים'];
+
 // Maps a table of raw cell rows into {name, phone, expected_guest} records. If the first
-// row looks like a header (contains "name" and "phone"), columns are matched by header text;
-// otherwise falls back to the same fixed name,phone,expected_guest order used by manual import.
+// row looks like a header (contains a recognized name and phone column), columns are matched
+// by header text; otherwise falls back to the same fixed name,phone,expected_guest order used
+// by manual import.
 function mapTableRows(rows) {
   if (rows.length === 0) return [];
 
   const headerCells = rows[0].map((cell) => String(normalizeCell(cell)).trim().toLowerCase());
-  const hasHeader = headerCells.includes('name') && headerCells.includes('phone');
+  const hasHeader = headerCells.some((cell) => NAME_HEADERS.includes(cell))
+    && headerCells.some((cell) => PHONE_HEADERS.includes(cell));
 
   let nameIdx = 0;
   let phoneIdx = 1;
@@ -192,9 +223,9 @@ function mapTableRows(rows) {
   let dataRows = rows;
 
   if (hasHeader) {
-    nameIdx = headerCells.indexOf('name');
-    phoneIdx = headerCells.indexOf('phone');
-    expectedIdx = headerCells.findIndex((cell) => cell.startsWith('expected'));
+    nameIdx = headerCells.findIndex((cell) => NAME_HEADERS.includes(cell));
+    phoneIdx = headerCells.findIndex((cell) => PHONE_HEADERS.includes(cell));
+    expectedIdx = headerCells.findIndex((cell) => cell.startsWith('expected') || EXPECTED_HEADERS.includes(cell));
     dataRows = rows.slice(1);
   }
 

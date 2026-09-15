@@ -51,6 +51,12 @@ CREATE TABLE IF NOT EXISTS rsvps (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_rsvps_user_phone ON rsvps(user_id, phone);
 
+-- Cleans up rsvps rows left behind (pre-dating the guard/cascade-delete fixes above) whose
+-- phone no longer matches any invited guest for that user. These are invisible to getStats'
+-- joins but still show up in the raw GET /api/rsvps list with a blank name. Safe to run on
+-- every boot: a matching invited guest is required for an rsvps row to exist going forward.
+DELETE FROM rsvps WHERE (user_id::text || ':' || phone) NOT IN (SELECT (user_id::text || ':' || phone) FROM invited_guests);
+
 CREATE TABLE IF NOT EXISTS bus_registrations (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id),

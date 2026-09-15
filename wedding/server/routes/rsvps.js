@@ -122,6 +122,12 @@ router.put('/rsvps/:phone', requireAuth, async (req, res) => {
     return res.status(204).end();
   }
 
+  // Mirrors the guard on the public POST route: without it, a stale phone (e.g. from a
+  // browser tab left open after the guest was deleted/edited elsewhere) would silently create
+  // an rsvps row that getStats() never counts but GET /api/rsvps still lists.
+  const { rows: guestRows } = await query('SELECT 1 FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.userId, req.params.phone]);
+  if (!guestRows[0]) return res.status(404).json({ error: 'This phone number was not found on the guest list' });
+
   const guestCount = status === 'attending' ? Math.max(parseInt(guests, 10) || 0, 1) : 0;
   const timestamp = new Date().toISOString();
 
