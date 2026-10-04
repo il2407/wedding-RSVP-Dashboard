@@ -85,7 +85,7 @@ body.workspace-page { display: block; padding: 36px 36px 56px; padding-inline-st
 .page-description { margin: 0; color: var(--muted); font-size: .9375rem; }
 .heading-seal { font: italic 88px/1 'Playfair Display', Georgia, serif; color: #bba47c; padding: 0 12px; opacity: .7; }
 .event-strip { border-top: 1px solid var(--line); padding-top: 12px; color: var(--muted); font-size: .875rem; margin: -4px 0 20px; }
-.dashboard-page .stats { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 14px; margin: 12px 0 20px; }
+.dashboard-page .stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; margin: 12px 0 20px; }
 .dashboard-page .stat-box { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px 18px 16px; text-align: start; box-shadow: none; backdrop-filter: none; animation: reveal .4s ease both; min-width: 0; }
 .dashboard-page .stat-box:hover { transform: translateY(-3px); box-shadow: 0 8px 20px #213e3509; }
 .stat-icon { width: 34px; height: 34px; display: grid; place-items: center; background: var(--soft-green); border-radius: 10px; color: var(--forest); margin-bottom: 14px; }
@@ -228,7 +228,7 @@ body.guest-page { --forest: var(--primary-dark); --forest-deep: var(--primary-da
   .workspace-page .admin-nav-link { padding: 10px; font-size: .8125rem; gap: 7px; min-height: 44px; }
   .workspace-page .admin-nav-link.admin-nav-logout { border: 0; margin-inline-start: auto; padding: 10px; font-size: .8125rem; }
   .nav-caption,.nav-note { display: none; }
-  .dashboard-page .stats { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .dashboard-page .stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .dashboard-page .stat-label { min-height: 0; }
   .dashboard-page .stat-heart { grid-column: span 2; }
   .heading-seal { font-size: 68px; }.page-heading { padding-top: 0; }

@@ -53,15 +53,17 @@ test('statusForGuestCount: 0 guests is declined, any positive count is attending
 
 test('getStats: separates invitations sent/responded/unanswered from attendee headcount (issue #2)', async () => {
   const userId = await makeUser();
-  await addGuest(userId, '0501111111', 'Guest One');
-  await addGuest(userId, '0502222222', 'Guest Two');
+  await addGuest(userId, '0501111111', 'Guest One', { expected_guest: 2 });
+  await addGuest(userId, '0502222222', 'Guest Two', { expected_guest: 3 });
   // Guest One responds with 2 attendees; Guest Two has not responded yet.
   await addRsvp(userId, '0501111111', 2);
 
   const stats = await getStats(userId);
   assert.equal(stats.totalInvited, 2);
+  assert.equal(stats.invitedHeadcount, 5); // expected guests including plus-ones
   assert.equal(stats.responded, 1); // one invitation answered, not two attendees
   assert.equal(stats.unanswered, 1);
+  assert.equal(stats.confirmedInvitations, 1);
   assert.equal(stats.confirmedAttendees, 2); // headcount including the plus-one
   assert.equal(stats.declined, 0);
 });

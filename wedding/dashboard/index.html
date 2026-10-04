@@ -440,24 +440,20 @@
     
     <div class="stats" id="stats-section">
       <div class="stat-box stat-users"><span class="stat-icon"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#users"></use></svg></span>
-        <span class="stat-label">הזמנות ברשימה</span>
+        <span class="stat-label">הזמנות</span>
         <span class="stat-value" id="total-invited">—</span>
       </div>
-      <div class="stat-box stat-check"><span class="stat-icon"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#check"></use></svg></span>
-        <span class="stat-label">הזמנות שנענו</span>
-        <span class="stat-value" id="responded">—</span>
+      <div class="stat-box stat-users"><span class="stat-icon"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#users"></use></svg></span>
+        <span class="stat-label">מוזמנים (כולל נלווים)</span>
+        <span class="stat-value" id="invited-headcount">—</span>
       </div>
-      <div class="stat-box stat-clock"><span class="stat-icon"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#clock"></use></svg></span>
-        <span class="stat-label">הזמנות שטרם נענו</span>
-        <span class="stat-value" id="not-approved">—</span>
+      <div class="stat-box stat-check"><span class="stat-icon"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#check"></use></svg></span>
+        <span class="stat-label">הזמנות שאישרו הגעה</span>
+        <span class="stat-value" id="confirmed-invitations">—</span>
       </div>
       <div class="stat-box stat-heart"><span class="stat-icon"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#heart"></use></svg></span>
-        <span class="stat-label">סה״כ מגיעים (כולל נלווים)</span>
+        <span class="stat-label">מגיעים (כולל נלווים)</span>
         <span class="stat-value" id="approved">—</span>
-      </div>
-      <div class="stat-box stat-minus"><span class="stat-icon"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#minus"></use></svg></span>
-        <span class="stat-label">הודיעו שלא מגיעים</span>
-        <span class="stat-value" id="declined">—</span>
       </div>
     </div>
 
@@ -630,21 +626,20 @@
       renderRsvpRows(filterBySearch(rsvpRows, document.getElementById('rsvp-search').value));
     }
 
-    // Invitations sent vs. responded vs. unanswered are counted per invitation (never
-    // double-counted for multi-attendee RSVPs); confirmed attendees is the separate
-    // headcount total including plus-ones. Comes straight from GET /api/rsvps/stats.
+    // Invitation counts (total / confirmed) are per invitation, never double-counted for
+    // multi-attendee RSVPs; invited headcount and confirmed attendees are the matching
+    // people totals including plus-ones. Comes straight from GET /api/rsvps/stats.
     function renderStats(stats) {
       if (!stats) return;
       document.getElementById('total-invited').textContent = stats.totalInvited;
-      document.getElementById('responded').textContent = stats.responded;
-      document.getElementById('not-approved').textContent = stats.unanswered;
+      document.getElementById('invited-headcount').textContent = stats.invitedHeadcount;
+      document.getElementById('confirmed-invitations').textContent = stats.confirmedInvitations;
       document.getElementById('approved').textContent = stats.confirmedAttendees;
-      document.getElementById('declined').textContent = stats.declined;
       const percentage = stats.totalInvited > 0 ? Math.min(100, Math.round(stats.responded / stats.totalInvited * 100)) : 0;
       document.getElementById('response-percent').textContent = percentage + '%';
       document.getElementById('response-progress').value = percentage;
       document.getElementById('response-summary').textContent = stats.totalInvited > 0
-        ? `${stats.responded} מתוך ${stats.totalInvited} הזמנות נענו · ${stats.unanswered} עדיין ממתינות לתשובה`
+        ? `${stats.responded} מתוך ${stats.totalInvited} הזמנות נענו · ${stats.unanswered} עדיין ממתינות לתשובה · ${stats.declined} הודיעו שלא מגיעים`
         : 'הוסיפו מוזמנים דרך ניהול האירוע כדי להתחיל';
     }
 

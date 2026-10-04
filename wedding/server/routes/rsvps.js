@@ -16,11 +16,15 @@ router.get('/rsvps', requireAuth, async (req, res) => {
   res.json(rows);
 });
 
-// Invitations sent, responded, unanswered, confirmed attendees (headcount including
-// plus-ones) and declined — kept as separate metrics so a multi-attendee RSVP is never
+// Invitations sent, invited headcount (expected guests including plus-ones), responded,
+// unanswered, confirmed invitations, confirmed attendees (headcount including plus-ones)
+// and declined — kept as separate metrics so a multi-attendee RSVP is never
 // double-counted as more than one "responded" invitation.
 async function getStats(userId) {
-  const { rows: totalRows } = await query('SELECT COUNT(*) AS "totalInvited" FROM invited_guests WHERE user_id = $1', [userId]);
+  const { rows: totalRows } = await query(
+    'SELECT COUNT(*) AS "totalInvited", COALESCE(SUM(expected_guest), 0) AS "invitedHeadcount" FROM invited_guests WHERE user_id = $1',
+    [userId]
+  );
   const { rows: respondedRows } = await query(
     `SELECT COUNT(*) AS responded FROM invited_guests ig
      JOIN rsvps r ON r.user_id = ig.user_id AND r.phone = ig.phone
@@ -28,7 +32,7 @@ async function getStats(userId) {
     [userId]
   );
   const { rows: confirmedRows } = await query(
-    `SELECT COALESCE(SUM(r.guests), 0) AS "confirmedAttendees" FROM invited_guests ig
+    `SELECT COUNT(*) AS "confirmedInvitations", COALESCE(SUM(r.guests), 0) AS "confirmedAttendees" FROM invited_guests ig
      JOIN rsvps r ON r.user_id = ig.user_id AND r.phone = ig.phone
      WHERE ig.user_id = $1 AND r.status = 'attending'`,
     [userId]
@@ -45,8 +49,10 @@ async function getStats(userId) {
 
   return {
     totalInvited,
+    invitedHeadcount: Number(totalRows[0].invitedHeadcount),
     responded,
     unanswered: Math.max(totalInvited - responded, 0),
+    confirmedInvitations: Number(confirmedRows[0].confirmedInvitations),
     confirmedAttendees: Number(confirmedRows[0].confirmedAttendees),
     declined: Number(declinedRows[0].declined),
   };
