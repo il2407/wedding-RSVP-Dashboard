@@ -166,20 +166,22 @@
     const BRIDE_PHOTO = `/media/${TENANT_ID}/bride_photo`;
     const APPROVAL_GIF = `/media/${TENANT_ID}/approval_gif`;
     const DECLINE_GIF = `/media/${TENANT_ID}/decline_gif`;
+    const MAYBE_GIF = `/media/${TENANT_ID}/maybe_gif`;
 
-    // Function to show the approval/decline gif popup; silently no-ops if that slot
-    // hasn't been uploaded yet (media upload is optional/skippable during onboarding)
+    // Function to show the approval/decline/maybe gif popup; silently no-ops if that slot
+    // hasn't been uploaded yet (media upload is optional/skippable during onboarding).
+    // Resolves to true only when the popup was actually shown.
     let responseMediaEnabled = true;
     let popupTrigger;
     let mediaRequest = 0;
     async function showGifPopup(gifUrl) {
-      if (!responseMediaEnabled) return;
+      if (!responseMediaEnabled) return false;
       const request = ++mediaRequest;
       try {
         const res = await fetch(gifUrl);
-        if (!res.ok || request !== mediaRequest) return;
+        if (!res.ok || request !== mediaRequest) return false;
         const blob = await res.blob();
-        if (request !== mediaRequest) return;
+        if (request !== mediaRequest) return false;
         const video = document.getElementById('photo-video');
         const isVideo = blob.type.startsWith('video/');
         photoImage.style.display = isVideo ? 'none' : 'block';
@@ -199,12 +201,14 @@
           media.onerror = reject;
           media.src = media.dataset.objectUrl = URL.createObjectURL(blob);
         });
-        if (request !== mediaRequest) return;
+        if (request !== mediaRequest) return false;
         popupTrigger = document.activeElement;
         photoModal.style.display = 'flex';
         photoCloseBtn.focus();
         if (isVideo && document.body.dataset.motion !== 'off' && !matchMedia('(prefers-reduced-motion: reduce)').matches) video.play().catch(() => {});
+        return true;
       } catch { /* The saved response remains visible when optional media is unavailable. */ }
+      return false;
     }
     function hidePhotoPopup() {
       mediaRequest++;
@@ -584,7 +588,7 @@
     });
     
     // Add event listener for "not sure" button
-    notSureBtn.addEventListener('click', function(e) {
+    notSureBtn.addEventListener('click', async function(e) {
       e.preventDefault();
       
       // Add button press animation
@@ -592,6 +596,9 @@
       setTimeout(() => {
         notSureBtn.style.transform = 'scale(1)';
       }, 150);
+
+      // Show the "maybe" gif if one was uploaded; otherwise fall back to the thank-you message
+      if (await showGifPopup(MAYBE_GIF)) return;
       
       // Show popup modal with enhanced styling
       modalMessage.innerHTML = `

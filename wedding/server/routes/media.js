@@ -7,7 +7,7 @@ const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-const VALID_SLOTS = ['groom_photo', 'bride_photo', 'approval_gif', 'decline_gif'];
+const VALID_SLOTS = ['groom_photo', 'bride_photo', 'approval_gif', 'decline_gif', 'maybe_gif'];
 
 const storage = multer.diskStorage({
   destination: uploadsDir,
