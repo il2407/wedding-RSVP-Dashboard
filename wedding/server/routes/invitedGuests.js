@@ -3,8 +3,10 @@ const multer = require('multer');
 const ExcelJS = require('exceljs');
 const { query, withTransaction } = require('../db');
 const { requireAuth } = require('../middleware/auth');
+const { requireNumericParam } = require('../middleware/errors');
 
 const router = express.Router();
+router.param('userId', requireNumericParam);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 // Splits one line on commas per RFC 4180: a comma inside a "quoted" field doesn't split
@@ -45,6 +47,21 @@ function stripExcelTextWrapper(value) {
   return match ? match[1] : value;
 }
 
+// Stores phones as digits only, so "050-123-4567", "050 1234567" and "+972501234567" don't
+// produce links the RSVP form rejects or duplicate guests that differ only by formatting.
+// Existing rows are left as-is: guests may already hold links carrying the old format.
+// A numeric XLSX cell has already lost its leading zero (0501234567 → 501234567), so a
+// 9-digit number from a numeric cell gets it back.
+function normalizePhone(value) {
+  const fromNumericCell = typeof value === 'number';
+  const digits = stripExcelTextWrapper(String(value).trim()).replace(/\D/g, '');
+  if (fromNumericCell && digits.length === 9) return `0${digits}`;
+  return digits;
+}
+
+const isValidPhone = (phone) => /^\d{9,15}$/.test(phone);
+const INVALID_PHONE_ERROR = 'Phone must contain 9-15 digits';
+
 async function upsertGuests(userId, rows) {
   const now = new Date().toISOString();
   let imported = 0;
@@ -61,7 +78,11 @@ async function upsertGuests(userId, rows) {
       // Only fall back to 1 when the column was blank/unparseable — an explicit 0 (e.g. a
       // +1 who declined in advance) must be preserved, not silently bumped up.
       const expectedGuest = Number.isNaN(parsedExpected) ? 1 : parsedExpected;
-      const cleanPhone = stripExcelTextWrapper(String(phone).trim());
+      const cleanPhone = normalizePhone(phone);
+      if (!isValidPhone(cleanPhone)) {
+        errors.push({ line: index + 1, error: INVALID_PHONE_ERROR });
+        continue;
+      }
       await client.query(
         `INSERT INTO invited_guests (user_id, phone, name, expected_guest, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $5)
          ON CONFLICT (user_id, phone) DO UPDATE SET name = $3, expected_guest = $4, updated_at = $5`,
@@ -87,8 +108,10 @@ router.get('/invited-guests', requireAuth, async (req, res) => {
 });
 
 router.post('/invited-guests', requireAuth, async (req, res) => {
-  const { phone, name, expected_guest, do_not_send } = req.body;
-  if (!phone || !name) return res.status(400).json({ error: 'phone and name are required' });
+  const { name, expected_guest, do_not_send } = req.body;
+  if (!req.body.phone || !name) return res.status(400).json({ error: 'phone and name are required' });
+  const phone = normalizePhone(req.body.phone);
+  if (!isValidPhone(phone)) return res.status(400).json({ error: INVALID_PHONE_ERROR });
 
   const now = new Date().toISOString();
   try {
@@ -110,7 +133,11 @@ router.put('/invited-guests/:phone', requireAuth, async (req, res) => {
   if (!existing) return res.status(404).json({ error: 'Not found' });
 
   const { name, phone, expected_guest, do_not_send } = req.body;
-  const newPhone = phone === undefined || phone === null || phone === '' ? existing.phone : String(phone).trim();
+  // An unchanged phone (as returned by GET) is kept verbatim so editing just the name of a
+  // legacy guest stored as "050-123-4567" doesn't move them and break their sent link.
+  const phoneUnchanged = phone === undefined || phone === null || phone === '' || String(phone).trim() === existing.phone;
+  const newPhone = phoneUnchanged ? existing.phone : normalizePhone(phone);
+  if (!phoneUnchanged && !isValidPhone(newPhone)) return res.status(400).json({ error: INVALID_PHONE_ERROR });
 
   if (newPhone !== existing.phone) {
     const { rows: conflictRows } = await query('SELECT id FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.userId, newPhone]);
@@ -233,7 +260,8 @@ function mapTableRows(rows) {
     .filter((row) => row.some((cell) => String(normalizeCell(cell)).trim() !== ''))
     .map((row) => ({
       name: normalizeCell(row[nameIdx]),
-      phone: row[phoneIdx] !== undefined ? String(normalizeCell(row[phoneIdx])).trim() : undefined,
+      // Numeric cells stay numbers so normalizePhone can restore their dropped leading zero.
+      phone: row[phoneIdx] !== undefined ? normalizeCell(row[phoneIdx]) : undefined,
       expected_guest: expectedIdx >= 0 ? normalizeCell(row[expectedIdx]) : undefined,
     }));
 }
@@ -261,24 +289,26 @@ function parseCsvBuffer(buffer) {
     .map((line) => splitCsvLine(line));
 }
 
-router.post('/invited-guests/upload', requireAuth, (req, res) => {
-  upload.single('file')(req, res, async (err) => {
-    if (err) return res.status(400).json({ error: err.message });
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-
-    const isXlsx = /\.xlsx$/i.test(req.file.originalname) || req.file.mimetype.includes('spreadsheet');
-
-    let rows;
-    try {
-      const tableRows = isXlsx ? await parseXlsxBuffer(req.file.buffer) : parseCsvBuffer(req.file.buffer);
-      rows = mapTableRows(tableRows);
-    } catch (parseErr) {
-      return res.status(400).json({ error: 'Could not parse file. Expected a CSV or XLSX with name/phone columns.' });
-    }
-
-    res.json(await upsertGuests(req.userId, rows));
-  });
+router.post('/invited-guests/upload', requireAuth, (req, res, next) => {
+  upload.single('file')(req, res, (err) => handleGuestFileUpload(req, res, err).catch(next));
 });
+
+async function handleGuestFileUpload(req, res, err) {
+  if (err) return res.status(400).json({ error: err.message });
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+  const isXlsx = /\.xlsx$/i.test(req.file.originalname) || req.file.mimetype.includes('spreadsheet');
+
+  let rows;
+  try {
+    const tableRows = isXlsx ? await parseXlsxBuffer(req.file.buffer) : parseCsvBuffer(req.file.buffer);
+    rows = mapTableRows(tableRows);
+  } catch (parseErr) {
+    return res.status(400).json({ error: 'Could not parse file. Expected a CSV or XLSX with name/phone columns.' });
+  }
+
+  res.json(await upsertGuests(req.userId, rows));
+}
 
 // Escapes a CSV field per RFC 4180: wraps in quotes and doubles any embedded quotes
 // whenever the value contains a comma, quote or line break.
@@ -323,3 +353,4 @@ router.get('/invited-guests/export', requireAuth, async (req, res) => {
 
 module.exports = router;
 module.exports.csvField = csvField;
+module.exports.normalizePhone = normalizePhone;

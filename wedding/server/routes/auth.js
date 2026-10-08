@@ -14,6 +14,7 @@ const googleClient = process.env.GOOGLE_CLIENT_ID ? new OAuth2Client(process.env
 router.post('/auth/signup', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'email and password are required' });
+  if (typeof password !== 'string') return res.status(400).json({ error: 'password must be a string' });
   if (password.length < MIN_PASSWORD_LENGTH) {
     return res.status(400).json({ error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` });
   }
@@ -48,6 +49,8 @@ router.post('/auth/signup', async (req, res) => {
 router.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'email and password are required' });
+  // bcrypt throws on a non-string (e.g. a JSON number), so reject it as a bad request up front.
+  if (typeof password !== 'string') return res.status(400).json({ error: 'password must be a string' });
 
   const normalizedEmail = String(email).trim().toLowerCase();
   const { rows } = await query('SELECT * FROM users WHERE email = $1', [normalizedEmail]);
@@ -67,6 +70,7 @@ router.post('/auth/login', async (req, res) => {
 router.post('/auth/reset-password', async (req, res) => {
   const { email, newPassword } = req.body;
   if (!email || !newPassword) return res.status(400).json({ error: 'email and newPassword are required' });
+  if (typeof newPassword !== 'string') return res.status(400).json({ error: 'newPassword must be a string' });
   if (newPassword.length < MIN_PASSWORD_LENGTH) {
     return res.status(400).json({ error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` });
   }

@@ -1,9 +1,11 @@
 const express = require('express');
 const { query } = require('../db');
 const { requireAuth } = require('../middleware/auth');
+const { requireNumericParam } = require('../middleware/errors');
 
 const { DEFAULT_DESIGN, validateDesign } = require('../rsvpDesign');
 const router = express.Router();
+router.param('userId', requireNumericParam);
 
 const SETTINGS_FIELDS = [
   'couple_name_1',

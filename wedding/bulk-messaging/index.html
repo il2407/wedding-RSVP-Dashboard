@@ -676,6 +676,7 @@
 
         function jobStatusLabel(job) {
             if (job.status === 'cancelled') return 'Cancelled';
+            if (job.status === 'failed') return `Failed — ${job.failed || 0} failed, nothing sent`;
             if (job.status === 'completed') return `Completed — ${job.sent || 0} sent, ${job.failed || 0} failed`;
             if (job.status === 'sending') return `Sending… ${(job.sent || 0) + (job.failed || 0)}/${job.total} done`;
             return `Scheduled for ${new Date(job.scheduled_at).toLocaleString()}`;

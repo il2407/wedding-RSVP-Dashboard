@@ -1,8 +1,10 @@
 const express = require('express');
 const { query } = require('../db');
 const { requireAuth } = require('../middleware/auth');
+const { requireNumericParam } = require('../middleware/errors');
 
 const router = express.Router();
+router.param('userId', requireNumericParam);
 
 // A guest-submitted RSVP always derives its status from the headcount they submitted:
 // 0 means they declined, anything else means they're attending with that many people.
@@ -10,6 +12,20 @@ function statusForGuestCount(guests) {
   const count = parseInt(guests, 10) || 0;
   return count > 0 ? 'attending' : 'declined';
 }
+
+const MAX_GUESTS_PER_RSVP = 50;
+
+// Public RSVP input is untrusted: accepts a whole number 0..MAX_GUESTS_PER_RSVP (as a number
+// or numeric string, which is what the form sends) and returns it, or null if invalid —
+// so a negative/garbage headcount can never land in the stats.
+function parseGuestCount(value) {
+  if (typeof value !== 'number' && typeof value !== 'string') return null;
+  if (!/^\d+$/.test(String(value).trim())) return null;
+  const n = Number(String(value).trim());
+  return n <= MAX_GUESTS_PER_RSVP ? n : null;
+}
+
+const INVALID_GUESTS_ERROR = `guests must be a whole number between 0 and ${MAX_GUESTS_PER_RSVP}`;
 
 router.get('/rsvps', requireAuth, async (req, res) => {
   const { rows } = await query('SELECT * FROM rsvps WHERE user_id = $1 ORDER BY timestamp DESC', [req.userId]);
@@ -70,8 +86,11 @@ router.get('/public/:userId/rsvps/:phone', async (req, res) => {
 });
 
 router.post('/public/:userId/rsvps', async (req, res) => {
-  const { phone, guests } = req.body;
-  if (!phone || guests === undefined) return res.status(400).json({ error: 'phone and guests are required' });
+  const { phone } = req.body;
+  if (!phone || req.body.guests === undefined) return res.status(400).json({ error: 'phone and guests are required' });
+  if (typeof phone !== 'string') return res.status(400).json({ error: 'phone must be a string' });
+  const guests = parseGuestCount(req.body.guests);
+  if (guests === null) return res.status(400).json({ error: INVALID_GUESTS_ERROR });
 
   const userId = req.params.userId;
 
@@ -88,7 +107,8 @@ router.post('/public/:userId/rsvps', async (req, res) => {
       [userId, phone, guests, status, timestamp]
     );
   } catch (err) {
-    return res.status(409).json({ error: 'RSVP already exists for this phone' });
+    if (err.code === '23505') return res.status(409).json({ error: 'RSVP already exists for this phone' });
+    throw err;
   }
   const { rows } = await query('SELECT * FROM rsvps WHERE user_id = $1 AND phone = $2', [userId, phone]);
   res.status(201).json(rows[0]);
@@ -100,8 +120,9 @@ router.put('/public/:userId/rsvps/:phone', async (req, res) => {
   const existing = existingRows[0];
   if (!existing) return res.status(404).json({ error: 'Not found' });
 
-  const { guests } = req.body;
-  if (guests === undefined) return res.status(400).json({ error: 'guests is required' });
+  if (req.body.guests === undefined) return res.status(400).json({ error: 'guests is required' });
+  const guests = parseGuestCount(req.body.guests);
+  if (guests === null) return res.status(400).json({ error: INVALID_GUESTS_ERROR });
 
   // A guest resubmitting their own RSVP always takes precedence over any prior manual
   // (admin-set) entry, so source is unconditionally reset to 'guest' here.
@@ -134,7 +155,7 @@ router.put('/rsvps/:phone', requireAuth, async (req, res) => {
   const { rows: guestRows } = await query('SELECT 1 FROM invited_guests WHERE user_id = $1 AND phone = $2', [req.userId, req.params.phone]);
   if (!guestRows[0]) return res.status(404).json({ error: 'This phone number was not found on the guest list' });
 
-  const guestCount = status === 'attending' ? Math.max(parseInt(guests, 10) || 0, 1) : 0;
+  const guestCount = status === 'attending' ? Math.min(Math.max(parseInt(guests, 10) || 0, 1), MAX_GUESTS_PER_RSVP) : 0;
   const timestamp = new Date().toISOString();
 
   await query(
@@ -149,4 +170,5 @@ router.put('/rsvps/:phone', requireAuth, async (req, res) => {
 
 module.exports = router;
 module.exports.statusForGuestCount = statusForGuestCount;
+module.exports.parseGuestCount = parseGuestCount;
 module.exports.getStats = getStats;

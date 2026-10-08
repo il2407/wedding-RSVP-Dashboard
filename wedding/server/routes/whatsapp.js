@@ -1,9 +1,11 @@
 const express = require('express');
 const { query, withTransaction } = require('../db');
 const { requireAuth } = require('../middleware/auth');
-const { runDueJobs } = require('../services/whatsappSender');
+const { requireNumericParam } = require('../middleware/errors');
+const { runDueJobsSafely } = require('../services/whatsappSender');
 
 const router = express.Router();
+router.param('id', requireNumericParam);
 
 // Looks up each phone's guest name (for {name}) and builds its personalized RSVP link (for
 // {link}), matching the same u=<userId>&phone=<phone> format the manual wa.me tool uses.
@@ -126,7 +128,7 @@ router.post('/admin/whatsapp/jobs', requireAuth, async (req, res) => {
   });
 
   if (sendAt.getTime() <= now.getTime()) {
-    runDueJobs(); // fire-and-forget: picks this job up right away instead of waiting for the next poll
+    runDueJobsSafely(); // fire-and-forget: picks this job up right away instead of waiting for the next poll
   }
 
   const { rows: jobRows } = await query('SELECT * FROM whatsapp_jobs WHERE id = $1', [jobId]);
@@ -137,9 +139,13 @@ router.delete('/admin/whatsapp/jobs/:id', requireAuth, async (req, res) => {
   const { rows: jobRows } = await query('SELECT * FROM whatsapp_jobs WHERE id = $1 AND user_id = $2', [req.params.id, req.userId]);
   const job = jobRows[0];
   if (!job) return res.status(404).json({ error: 'Not found' });
-  if (job.status !== 'pending') return res.status(409).json({ error: 'Only a still-pending job can be cancelled' });
-
-  await query("UPDATE whatsapp_jobs SET status = 'cancelled' WHERE id = $1", [job.id]);
+  // Conditional update so a job the sender claimed in the meantime is never marked cancelled
+  // while it's actually going out.
+  const { rows: cancelled } = await query(
+    "UPDATE whatsapp_jobs SET status = 'cancelled' WHERE id = $1 AND status = 'pending' RETURNING id",
+    [job.id]
+  );
+  if (!cancelled[0]) return res.status(409).json({ error: 'Only a still-pending job can be cancelled' });
   res.status(204).end();
 });
 

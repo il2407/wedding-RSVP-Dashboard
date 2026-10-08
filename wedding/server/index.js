@@ -3,6 +3,7 @@ const path = require('path');
 const express = require('express');
 const cookieParser = require('cookie-parser');
 
+const { errorHandler } = require('./middleware/errors');
 const { requireAuthPage, requireOnboarded } = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
 const configRoutes = require('./routes/config');
@@ -36,6 +37,14 @@ app.use('/onboarding', requireAuthPage, express.static(path.join(weddingRoot, 'o
 app.use('/dashboard', requireAuthPage, requireOnboarded, express.static(path.join(weddingRoot, 'dashboard')));
 app.use('/bulk-messaging', requireAuthPage, requireOnboarded, express.static(path.join(weddingRoot, 'bulk-messaging')));
 app.use('/admin', requireAuthPage, requireOnboarded, express.static(path.join(weddingRoot, 'admin')));
+
+app.use(errorHandler);
+
+// Last line of defence: on Node 22 an unhandled rejection anywhere (e.g. a DB hiccup in a
+// background job) would otherwise kill the process and take every account offline.
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled promise rejection', err);
+});
 
 const port = process.env.PORT || 8080;
 app.listen(port, () => {

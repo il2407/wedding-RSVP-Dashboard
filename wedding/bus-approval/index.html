@@ -795,7 +795,7 @@
       const formData = new FormData(form);
       const data = {
         full_name: formData.get('fullName').trim(),
-        phone: formData.get('phone').trim(),
+        phone: formData.get('phone').replace(/\D/g, ''),
         going_count: parseInt(formData.get('goingCount')),
         return_count: parseInt(formData.get('returnCount')),
         going_confirmed: formData.get('goingConfirmed') === 'on',
@@ -889,7 +889,7 @@
       const formData = new FormData(attendanceForm);
       const data = {
         full_name: formData.get('attendanceName').trim(),
-        phone: formData.get('attendancePhone').trim(),
+        phone: formData.get('attendancePhone').replace(/\D/g, ''),
         going_count: 0,
         return_count: 0,
         going_confirmed: formData.get('onBusGoing') === 'on',

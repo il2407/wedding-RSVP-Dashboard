@@ -400,7 +400,7 @@
         confirmation.textContent = 'מספר טלפון לא נמצא בכתובת האתר';
         return;
       }
-      if (!phone.match(/^[0-9]{9,15}$/)) {
+      if (!/^[0-9]{9,15}$/.test(phone.replace(/\D/g, ''))) { // legacy links may carry "050-123-4567"
         confirmation.style.color = '#ef4444';
         confirmation.textContent = 'מספר טלפון לא תקין בכתובת האתר';
         return;
@@ -512,7 +512,7 @@
         confirmation.textContent = 'מספר טלפון לא נמצא בכתובת האתר';
         return;
       }
-      if (!phone.match(/^[0-9]{9,15}$/)) {
+      if (!/^[0-9]{9,15}$/.test(phone.replace(/\D/g, ''))) { // legacy links may carry "050-123-4567"
         confirmation.style.color = '#ef4444';
         confirmation.textContent = 'מספר טלפון לא תקין בכתובת האתר';
         return;

@@ -41,7 +41,14 @@ async function processJob(job) {
   const settings = settingsRows[0];
   const countryCode = settings ? settings.whatsapp_country_code : '';
 
-  await query("UPDATE whatsapp_jobs SET status = 'sending' WHERE id = $1", [job.id]);
+  // Claim the job atomically: runDueJobs selected it earlier, and it may have been cancelled
+  // since (e.g. while an earlier job in the same run was still sending), so only proceed if
+  // it's still pending/sending at this moment.
+  const { rows: claimed } = await query(
+    "UPDATE whatsapp_jobs SET status = 'sending' WHERE id = $1 AND status IN ('pending', 'sending') RETURNING id",
+    [job.id]
+  );
+  if (!claimed[0]) return;
 
   const { rows: recipients } = await query(
     "SELECT * FROM whatsapp_job_recipients WHERE job_id = $1 AND status = 'pending'",
@@ -68,7 +75,13 @@ async function processJob(job) {
     await sleep(SEND_DELAY_MS);
   }
 
-  await query("UPDATE whatsapp_jobs SET status = 'completed' WHERE id = $1", [job.id]);
+  // A job where nothing got through (e.g. bad Twilio sender) is 'failed', not 'completed'.
+  const { rows: sentRows } = await query(
+    "SELECT COUNT(*) AS sent FROM whatsapp_job_recipients WHERE job_id = $1 AND status = 'sent'",
+    [job.id]
+  );
+  const finalStatus = Number(sentRows[0].sent) > 0 ? 'completed' : 'failed';
+  await query('UPDATE whatsapp_jobs SET status = $1 WHERE id = $2', [finalStatus, job.id]);
 }
 
 let isRunning = false;
@@ -93,9 +106,17 @@ async function runDueJobs() {
   }
 }
 
-function startScheduler() {
-  runDueJobs();
-  setInterval(runDueJobs, 30 * 1000);
+// Runs in the background (timer / fire-and-forget), so errors must be caught here — an
+// unhandled rejection would otherwise crash the whole server.
+function runDueJobsSafely() {
+  return runDueJobs().catch((err) => {
+    console.error('WhatsApp scheduler run failed', err);
+  });
 }
 
-module.exports = { startScheduler, runDueJobs };
+function startScheduler() {
+  runDueJobsSafely();
+  setInterval(runDueJobsSafely, 30 * 1000);
+}
+
+module.exports = { startScheduler, runDueJobs, runDueJobsSafely, processJob };

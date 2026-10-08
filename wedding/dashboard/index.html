@@ -583,6 +583,18 @@
         `<tr><td colspan="${colSpan}" class="loading-row">טוען...</td></tr>`;
     }
 
+    // Builds a table row from plain values via textContent, never innerHTML: bus registrations
+    // (name/phone) come from an anonymous public form, so they must never be parsed as HTML.
+    function textRow(values) {
+      const tr = document.createElement('tr');
+      values.forEach(value => {
+        const td = document.createElement('td');
+        td.textContent = value === null || value === undefined ? '' : String(value);
+        tr.appendChild(td);
+      });
+      return tr;
+    }
+
     function renderRsvpRows(rows) {
       const tbody = document.querySelector('#rsvp-table tbody');
       if (rows.length === 0) {
@@ -591,14 +603,7 @@
       }
       tbody.innerHTML = '';
       rows.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${row.name}</td>
-          <td>${row.phone || ''}</td>
-          <td>${row.guests || ''}</td>
-          <td>${formatDate(row.timestamp)}</td>
-        `;
-        tbody.appendChild(tr);
+        tbody.appendChild(textRow([row.name, row.phone, row.guests || '', formatDate(row.timestamp)]));
       });
     }
 
@@ -812,15 +817,13 @@
       }
       tbody.innerHTML = '';
       rows.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${row.full_name || ''}</td>
-          <td>${row.phone || ''}</td>
-          <td>${row.going_count || 0}${row.going_confirmed ? ' ✓' : ''}</td>
-          <td>${row.return_count || 0}${row.return_confirmed ? ' ✓' : ''}</td>
-          <td>${formatDate(row.updated_at)}</td>
-        `;
-        tbody.appendChild(tr);
+        tbody.appendChild(textRow([
+          row.full_name,
+          row.phone,
+          `${row.going_count || 0}${row.going_confirmed ? ' ✓' : ''}`,
+          `${row.return_count || 0}${row.return_confirmed ? ' ✓' : ''}`,
+          formatDate(row.updated_at),
+        ]));
       });
     }
 
