@@ -457,6 +457,7 @@
       </div>
     </div>
 
+    <section class="response-overview attendance-overview" aria-label="אחוז הגעה"><div><span class="overview-label">אחוז הגעה מתוך כלל המוזמנים (כולל נלווים)</span><strong id="attendance-percent">—</strong></div><progress id="attendance-progress" max="100" value="0" aria-label="אחוז המגיעים מתוך כלל המוזמנים"></progress><p id="attendance-summary">ממתינים לנתוני האירוע</p></section>
     <section class="response-overview" aria-label="התקדמות אישורי הגעה"><div><span class="overview-label">התקדמות אישורי ההגעה</span><strong id="response-percent">—</strong></div><progress id="response-progress" max="100" value="0" aria-label="אחוז ההזמנות שנענו"></progress><p id="response-summary">ממתינים לנתוני האירוע</p></section>
     <div class="guest-toolbar">    <div class="tabs">
       <button class="tab-btn active" aria-pressed="true" id="tab-rsvp">אישורי הגעה</button>
@@ -645,6 +646,14 @@
       document.getElementById('response-progress').value = percentage;
       document.getElementById('response-summary').textContent = stats.totalInvited > 0
         ? `${stats.responded} מתוך ${stats.totalInvited} הזמנות נענו · ${stats.unanswered} עדיין ממתינות לתשובה · ${stats.declined} הודיעו שלא מגיעים`
+        : 'הוסיפו מוזמנים דרך ניהול האירוע כדי להתחיל';
+      // Headline attendance rate: confirmed people (incl. plus-ones) out of all expected
+      // people (incl. plus-ones). Not capped, since guests may confirm more than expected.
+      const attendance = stats.invitedHeadcount > 0 ? Math.round(stats.confirmedAttendees / stats.invitedHeadcount * 100) : 0;
+      document.getElementById('attendance-percent').textContent = attendance + '%';
+      document.getElementById('attendance-progress').value = Math.min(100, attendance);
+      document.getElementById('attendance-summary').textContent = stats.invitedHeadcount > 0
+        ? `${stats.confirmedAttendees} מתוך ${stats.invitedHeadcount} אורחים צפויים אישרו הגעה`
         : 'הוסיפו מוזמנים דרך ניהול האירוע כדי להתחיל';
     }
 
