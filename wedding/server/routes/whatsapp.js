@@ -116,9 +116,9 @@ router.post('/admin/whatsapp/jobs', requireAuth, async (req, res) => {
     const id = rows[0].id;
     for (const r of recipients) {
       const message = message_template
-        .replace(/{name}/g, r.name)
-        .replace(/{phone}/g, r.phone)
-        .replace(/{link}/g, r.link);
+        .replace(/{name}/g, () => r.name)
+        .replace(/{phone}/g, () => r.phone)
+        .replace(/{link}/g, () => r.link);
       await client.query(
         'INSERT INTO whatsapp_job_recipients (job_id, phone, name, message, status) VALUES ($1, $2, $3, $4, $5)',
         [id, r.phone, r.name, message, 'pending']

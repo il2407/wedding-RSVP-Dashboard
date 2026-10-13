@@ -225,8 +225,8 @@
         </div>
 
         <div class="form-group">
-            <label for="phone-numbers">מספרי טלפון · מספר אחד בכל שורה</label>
-            <textarea id="phone-numbers" class="phone-list" placeholder="0541234567&#10;0547654321&#10;0509876543"></textarea>
+            <label for="phone-numbers">נמענים · בכל שורה מספר טלפון, ואחריו פסיק ושם (השם לא חובה)</label>
+            <textarea id="phone-numbers" class="phone-list" placeholder="0541234567, דנה כהן&#10;0547654321, יוסי לוי&#10;0509876543"></textarea>
             <button type="button" class="secondary-btn" id="load-invited-btn">טעינת רשימת המוזמנים</button>
             <label style="display:inline-flex; align-items:center; gap:0.4rem; font-weight:400; margin-inline-start:1rem;">
                 <input type="checkbox" id="unresponded-only-checkbox">
@@ -362,7 +362,9 @@
                     showStatus('No matching guests found in your invited guest list.', 'error');
                     return;
                 }
-                document.getElementById('phone-numbers').value = guests.map(g => g.phone).join('\n');
+                document.getElementById('phone-numbers').value = guests
+                    .map(g => (g.name ? `${g.phone}, ${g.name}` : g.phone))
+                    .join('\n');
                 showStatus(`Loaded ${guests.length} phone number(s) from your invited guest list.`, 'success');
             } catch (error) {
                 console.error('Error loading invited guests:', error);
@@ -375,12 +377,51 @@
             return `${baseUrl}${separator}u=${currentUserId}&phone=${encodeURIComponent(phone)}`;
         }
 
-        function previewMessages() {
+        // Each line is "phone" or "phone, name". The phone itself never contains a comma, so
+        // everything after the first comma is the name (names may contain commas).
+        function parseRecipientLines() {
+            return document.getElementById('phone-numbers').value
+                .split('\n')
+                .map(line => {
+                    const commaAt = line.indexOf(',');
+                    if (commaAt === -1) return { phone: line.trim(), name: '' };
+                    return { phone: line.slice(0, commaAt).trim(), name: line.slice(commaAt + 1).trim() };
+                })
+                .filter(r => r.phone);
+        }
+
+        function recipientLabel(r) {
+            return r.name ? `${r.name} (${r.phone})` : r.phone;
+        }
+
+        // Fills in {name} for lines typed without one, from the invited guest list by phone.
+        // A phone that isn't on the list gets an empty name, same as the server-side Twilio send.
+        async function loadGuestNames() {
+            try {
+                const res = await fetch('/api/invited-guests');
+                if (!res.ok) return new Map();
+                const guests = await res.json();
+                return new Map(guests.map(g => [g.phone, g.name || '']));
+            } catch (error) {
+                console.error('Error loading guest names:', error);
+                return new Map();
+            }
+        }
+
+        // Function replacements so a "$" in a guest's name isn't read as a replacement pattern.
+        function fillTemplate(template, { name, phone, link }) {
+            return template
+                .replace(/{name}/g, () => name)
+                .replace(/{phone}/g, () => phone)
+                .replace(/{link}/g, () => link);
+        }
+
+        async function previewMessages() {
             const template = document.getElementById('message-template').value;
-            const phoneNumbers = document.getElementById('phone-numbers').value.split('\n').filter(phone => phone.trim());
+            const recipients = parseRecipientLines();
             const baseUrl = RSVP_BASE_URL;
             
-            if (!template || phoneNumbers.length === 0) {
+            if (!template || recipients.length === 0) {
                 showStatus('Please fill in both message template and phone numbers.', 'error');
                 return;
             }
@@ -390,38 +431,40 @@
                 return;
             }
             
+            const guestNames = await loadGuestNames();
             const previewContainer = document.getElementById('preview-container');
             const previewMessages = document.getElementById('preview-messages');
             previewMessages.innerHTML = '';
             
-            phoneNumbers.forEach((phone, index) => {
-                const cleanPhone = phone.trim();
-                if (cleanPhone) {
-                    const personalizedLink = buildPersonalizedLink(baseUrl, cleanPhone);
-                    const message = template
-                        .replace(/{phone}/g, cleanPhone)
-                        .replace(/{link}/g, personalizedLink);
-                    
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = 'preview-message';
-                    messageDiv.innerHTML = `
-                        <strong>To: ${cleanPhone}</strong><br>
-                        <div style="margin-top: 0.5rem; white-space: pre-wrap;">${message}</div>
-                    `;
-                    previewMessages.appendChild(messageDiv);
-                }
+            recipients.forEach(r => {
+                const name = r.name || guestNames.get(r.phone) || '';
+                const message = fillTemplate(template, {
+                    name,
+                    phone: r.phone,
+                    link: buildPersonalizedLink(baseUrl, r.phone),
+                });
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'preview-message';
+                const toLine = document.createElement('strong');
+                toLine.textContent = `To: ${recipientLabel({ phone: r.phone, name })}`;
+                const body = document.createElement('div');
+                body.style.cssText = 'margin-top: 0.5rem; white-space: pre-wrap;';
+                body.textContent = message;
+                messageDiv.append(toLine, body);
+                previewMessages.appendChild(messageDiv);
             });
-            
+
             previewContainer.style.display = 'block';
-            showStatus(`Preview generated for ${phoneNumbers.length} messages.`, 'success');
+            showStatus(`Preview generated for ${recipients.length} messages.`, 'success');
         }
         
-        function sendBulkMessages() {
+        async function sendBulkMessages() {
             const template = document.getElementById('message-template').value;
-            const phoneNumbers = document.getElementById('phone-numbers').value.split('\n').filter(phone => phone.trim());
+            const recipients = parseRecipientLines();
             const baseUrl = RSVP_BASE_URL;
             
-            if (!template || phoneNumbers.length === 0) {
+            if (!template || recipients.length === 0) {
                 showStatus('Please fill in both message template and phone numbers.', 'error');
                 return;
             }
@@ -436,7 +479,7 @@
                 return;
             }
 
-            const suspiciousNumbers = phoneNumbers.map(p => p.trim()).filter(isMissingCountryPrefix);
+            const suspiciousNumbers = recipients.map(r => r.phone).filter(isMissingCountryPrefix);
             if (suspiciousNumbers.length > 0) {
                 const proceed = confirm(
                     `The following number(s) don't start with "0" or the country code (${countryCode}), so WhatsApp may not open them correctly:\n\n` +
@@ -457,25 +500,25 @@
             progress.style.display = 'block';
             
             let sentCount = 0;
-            const totalCount = phoneNumbers.length;
+            const totalCount = recipients.length;
             
+            const guestNames = await loadGuestNames();
+
             // Create all WhatsApp URLs first
             const whatsappUrls = [];
-            phoneNumbers.forEach((phone, index) => {
-                const cleanPhone = phone.trim();
-                if (cleanPhone) {
-                    const personalizedLink = buildPersonalizedLink(baseUrl, cleanPhone);
-                    const message = template
-                        .replace(/{phone}/g, cleanPhone)
-                        .replace(/{link}/g, personalizedLink);
-                    
-                    const whatsappUrl = `https://wa.me/${toWhatsAppNumber(cleanPhone)}?text=${encodeURIComponent(message)}`;
-                    whatsappUrls.push({
-                        phone: cleanPhone,
-                        url: whatsappUrl,
-                        message: message
-                    });
-                }
+            recipients.forEach(r => {
+                const name = r.name || guestNames.get(r.phone) || '';
+                const message = fillTemplate(template, {
+                    name,
+                    phone: r.phone,
+                    link: buildPersonalizedLink(baseUrl, r.phone),
+                });
+                whatsappUrls.push({
+                    phone: r.phone,
+                    name,
+                    url: `https://wa.me/${toWhatsAppNumber(r.phone)}?text=${encodeURIComponent(message)}`,
+                    message,
+                });
             });
             
             // Show options to user
@@ -502,15 +545,15 @@
             optionsContainer.innerHTML = `
                 <h3 style="color: #ea580c; margin-bottom: 1rem;">WhatsApp Sending Options:</h3>
                 <div style="margin-bottom: 1rem;">
-                    <button onclick="openAllWhatsAppChats(${JSON.stringify(whatsappUrls).replace(/"/g, '&quot;')})" 
+                    <button data-action="open" 
                             style="background: linear-gradient(135deg, #f97316, #ea580c); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; margin-right: 0.5rem; cursor: pointer;">
                         📱 Open WhatsApp Chats (One by One)
                     </button>
-                    <button onclick="copyAllMessages(${JSON.stringify(whatsappUrls).replace(/"/g, '&quot;')})" 
+                    <button data-action="copy" 
                             style="background: #6b7280; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; margin-right: 0.5rem; cursor: pointer;">
                         📋 Copy All Messages
                     </button>
-                    <button onclick="downloadMessages(${JSON.stringify(whatsappUrls).replace(/"/g, '&quot;')})" 
+                    <button data-action="download" 
                             style="background: #059669; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; cursor: pointer;">
                         💾 Download Messages
                     </button>
@@ -525,6 +568,11 @@
                 </div>
             `;
             
+            const actions = { open: openAllWhatsAppChats, copy: copyAllMessages, download: downloadMessages };
+            optionsContainer.querySelectorAll('[data-action]').forEach(btn => {
+                btn.addEventListener('click', () => actions[btn.dataset.action](whatsappUrls));
+            });
+
             statusDiv.innerHTML = '';
             statusDiv.appendChild(optionsContainer);
         }
@@ -558,7 +606,7 @@
             const popup = window.open(currentItem.url, windowName, 'width=600,height=800');
             
             if (popup) {
-                showStatus(`✅ Opened chat ${window.currentIndex + 1}/${window.whatsappUrls.length} for ${currentItem.phone}. Send the message, then click "Next Chat" below.`, 'success');
+                showStatus(`✅ Opened chat ${window.currentIndex + 1}/${window.whatsappUrls.length} for ${recipientLabel(currentItem)}. Send the message, then click "Next Chat" below.`, 'success');
                 
                 // Update button text and increment index
                 const nextBtn = document.getElementById('next-chat-btn');
@@ -579,7 +627,7 @@
         function copyAllMessages(whatsappUrls) {
             let allMessages = '';
             whatsappUrls.forEach((item, index) => {
-                allMessages += `=== Message ${index + 1} - ${item.phone} ===\n`;
+                allMessages += `=== Message ${index + 1} - ${recipientLabel(item)} ===\n`;
                 allMessages += item.message;
                 allMessages += '\n\n';
             });
@@ -599,11 +647,12 @@
         }
         
         function downloadMessages(whatsappUrls) {
-            let csvContent = 'Phone Number,Message,WhatsApp URL\n';
+            let csvContent = 'Phone Number,Name,Message,WhatsApp URL\n';
             whatsappUrls.forEach(item => {
+                const escapedName = item.name.replace(/"/g, '""');
                 const escapedMessage = item.message.replace(/"/g, '""');
                 const escapedUrl = item.url.replace(/"/g, '""');
-                csvContent += `"${item.phone}","${escapedMessage}","${escapedUrl}"\n`;
+                csvContent += `"${item.phone}","${escapedName}","${escapedMessage}","${escapedUrl}"\n`;
             });
             
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -627,7 +676,7 @@
 
         async function scheduleAutomatedSend() {
             const template = document.getElementById('message-template').value;
-            const phoneNumbers = document.getElementById('phone-numbers').value.split('\n').map(p => p.trim()).filter(Boolean);
+            const phoneNumbers = parseRecipientLines().map(r => r.phone);
             const scheduledAtLocal = document.getElementById('schedule-datetime').value;
 
             if (!template || phoneNumbers.length === 0) {
