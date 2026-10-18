@@ -143,6 +143,25 @@ test('bus registration normalizes phone formatting and validates input', async (
   assert.equal(unknownAccount.status, 404);
 });
 
+test('"I\'m on the bus" updates only the directions it sends', async () => {
+  const userId = await makeUser();
+  const url = `/api/public/${userId}/bus-registrations`;
+  await jsonRequest('POST', url, { full_name: 'Rider', phone: '0521111111', going_count: 1, return_count: 1 });
+
+  // Morning: on the bus going. Evening: on the bus back. Neither may wipe the other or the counts.
+  await jsonRequest('PUT', `${url}/0521111111`, { full_name: 'Rider', going_confirmed: true, going_count: 1 });
+  const res = await jsonRequest('PUT', `${url}/0521111111`, { full_name: 'Rider', return_confirmed: true, return_count: 1 });
+  const row = await res.json();
+  assert.deepEqual(
+    [row.going_count, row.return_count, row.going_confirmed, row.return_confirmed],
+    [1, 1, 1, 1]
+  );
+
+  // Re-registering (no confirmation fields sent) keeps the confirmations
+  const again = await (await jsonRequest('PUT', `${url}/0521111111`, { full_name: 'Rider', going_count: 1, return_count: 0 })).json();
+  assert.deepEqual([again.return_count, again.going_confirmed, again.return_confirmed], [0, 1, 1]);
+});
+
 test('media upload rejects HTML/SVG and stores images with a server-chosen extension', async () => {
   const userId = await makeUser();
   const html = await uploadMedia(userId, 'approval_gif', '<script>alert(1)</script>', 'text/html', 'x.png');

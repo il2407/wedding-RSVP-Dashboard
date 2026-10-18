@@ -824,13 +824,17 @@
         tbody.innerHTML = '<tr><td colspan="5" class="empty-row">אין רישומים להסעה</td></tr>';
         return;
       }
+      // Each registration is one passenger (count 1 = yes, 0 = no); older registrations made
+      // for a whole group still show their head count. ✓ = confirmed on the bus.
+      const direction = (count, confirmed) =>
+        `${count > 1 ? count : (count ? 'כן' : 'לא')}${confirmed ? ' ✓' : ''}`;
       tbody.innerHTML = '';
       rows.forEach(row => {
         tbody.appendChild(textRow([
           row.full_name,
           row.phone,
-          `${row.going_count || 0}${row.going_confirmed ? ' ✓' : ''}`,
-          `${row.return_count || 0}${row.return_confirmed ? ' ✓' : ''}`,
+          direction(row.going_count, row.going_confirmed),
+          direction(row.return_count, row.return_confirmed),
           formatDate(row.updated_at),
         ]));
       });

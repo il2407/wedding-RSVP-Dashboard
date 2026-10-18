@@ -385,6 +385,53 @@
       font-weight: 600;
     }
     
+    .bus-tip {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      color: #92400e;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      padding: 0.8rem 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      box-shadow: 0 2px 8px rgba(251, 191, 36, 0.15);
+    }
+
+    .passenger-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .passenger-header .section-title {
+      margin-bottom: 0;
+    }
+
+    .direction-row {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .direction-row > div {
+      flex: 1;
+    }
+
+    /* Colors come from the theme's .secondary / .danger button styles */
+    .remove-passenger-btn {
+      width: auto;
+    }
+
+    body button.danger.remove-passenger-btn:hover {
+      background: #ffe1d9;
+    }
+
+    .add-passenger-btn {
+      margin-bottom: 1.5rem;
+      border-style: dashed !important;
+    }
+
     @media (max-width: 480px) {
       .container {
         padding: 2rem 1.5rem 2rem 1.5rem;
@@ -431,58 +478,15 @@
       <!-- Registration Tab -->
       <div id="registration-tab" class="tab-content active">
         <form id="bus-form" autocomplete="off">
-          <!-- Personal Information Section -->
-          <div class="form-section">
-            <h3 class="section-title">פרטים אישיים</h3>
-            <label for="fullName">שם מלא</label>
-            <input type="text" id="fullName" name="fullName" required>
-            
-            <label for="phone">מספר טלפון</label>
-            <input type="tel" id="phone" name="phone" required>
-            <div style="
-              background: linear-gradient(135deg, #fef3c7, #fde68a);
-              color: #92400e;
-              font-size: 0.9rem;
-              font-weight: 500;
-              text-align: center;
-              margin-top: 0.5rem;
-              padding: 0.8rem 1rem;
-              border-radius: 12px;
-              border: 1px solid rgba(251, 191, 36, 0.3);
-              box-shadow: 0 2px 8px rgba(251, 191, 36, 0.15);
-            ">
-               מספר הטלפון הוא המזהה שלך - תמיד אפשר לעדכן את מספר המגיעים! 💡
-            </div>
+          <div class="bus-tip">
+            כל נוסע נרשם עם שם וטלפון משלו - הטלפון מזהה אותו, ותמיד אפשר לחזור ולעדכן! 💡
           </div>
-          
-          <!-- Going to Wedding Section -->
-          <div class="form-section">
-            <h3 class="section-title">🎊 בדרך לחתונה</h3>
-            <label for="goingCount">כמה אנשים תהיו בהלוך?</label>
-            <select id="goingCount" name="goingCount" required>
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-          </div>
-          
-          <!-- Return from Wedding Section -->
-          <div class="form-section">
-            <h3 class="section-title">🏠 בדרך הביתה</h3>
-            <label for="returnCount">כמה אנשים תהיו בחזור?</label>
-            <select id="returnCount" name="returnCount" required>
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-          </div>
-          
+
+          <!-- One card per passenger, built by addPassenger() -->
+          <div id="passengers"></div>
+
+          <button type="button" id="add-passenger-btn" class="secondary add-passenger-btn">+ הוספת נוסע</button>
+
           <button type="submit" id="submit-btn">
             <span id="btn-text">הרשמה</span>
             <span id="btn-spinner" style="display:none; margin-right:8px; vertical-align:middle;">
@@ -502,7 +506,7 @@
       </div>
       
       <!-- Attendance Tab -->
-      <div id="attendance-tab" class="tab-content" style="display: none;">
+      <div id="attendance-tab" class="tab-content">
         <form id="attendance-form" autocomplete="off">
           <!-- Personal Information Section -->
           <div class="form-section">
@@ -663,17 +667,77 @@
       return await res.json();
     }
 
-    // Auto-fill form from URL parameters
+    const passengersEl = document.getElementById('passengers');
+    let passengerSeq = 0;
+
+    // Renumbers the cards and only offers "remove" when there's more than one passenger
+    function refreshPassengerCards() {
+      const cards = passengersEl.querySelectorAll('.passenger');
+      cards.forEach((card, i) => {
+        card.querySelector('.section-title').textContent = `נוסע ${i + 1}`;
+        card.querySelector('.remove-passenger-btn').style.display = cards.length > 1 ? '' : 'none';
+      });
+    }
+
+    // Adds a passenger card: full name, phone, and yes/no for each direction
+    function addPassenger(name = '', phone = '') {
+      const id = ++passengerSeq;
+      const card = document.createElement('div');
+      card.className = 'form-section passenger';
+      card.innerHTML = `
+        <div class="passenger-header">
+          <h3 class="section-title"></h3>
+          <button type="button" class="danger remove-passenger-btn">הסרה</button>
+        </div>
+        <label for="p-name-${id}">שם מלא</label>
+        <input type="text" id="p-name-${id}" class="p-name" required>
+        <label for="p-phone-${id}">מספר טלפון</label>
+        <input type="tel" id="p-phone-${id}" class="p-phone" required>
+        <div class="direction-row">
+          <div>
+            <label for="p-going-${id}">🎊 בהלוך?</label>
+            <select id="p-going-${id}" class="p-going">
+              <option value="1">כן</option>
+              <option value="0">לא</option>
+            </select>
+          </div>
+          <div>
+            <label for="p-return-${id}">🏠 בחזור?</label>
+            <select id="p-return-${id}" class="p-return">
+              <option value="1">כן</option>
+              <option value="0">לא</option>
+            </select>
+          </div>
+        </div>`;
+      card.querySelector('.p-name').value = name;
+      card.querySelector('.p-phone').value = phone;
+      card.querySelector('.remove-passenger-btn').addEventListener('click', () => {
+        card.remove();
+        refreshPassengerCards();
+      });
+      passengersEl.appendChild(card);
+      refreshPassengerCards();
+      return card;
+    }
+
+    function resetPassengers() {
+      passengersEl.innerHTML = '';
+      addPassenger();
+    }
+
+    document.getElementById('add-passenger-btn').addEventListener('click', () => {
+      addPassenger().querySelector('.p-name').focus();
+    });
+
+    // Auto-fill the first passenger (and the "I'm on the bus" tab) from URL parameters
     function autoFillFromUrl() {
       const phone = getUrlParameter('phone');
       const name = getUrlParameter('name');
-      
-      if (phone) {
-        document.getElementById('phone').value = phone;
-      }
-      if (name) {
-        document.getElementById('fullName').value = name;
-      }
+      const first = passengersEl.querySelector('.passenger');
+      first.querySelector('.p-name').value = name;
+      first.querySelector('.p-phone').value = phone;
+      document.getElementById('attendanceName').value = name;
+      document.getElementById('attendancePhone').value = phone;
     }
     
     // Validate phone number
@@ -684,6 +748,7 @@
     // Show loading state
     function showLoading() {
       submitBtn.disabled = true;
+      attendanceSubmitBtn.disabled = true;
       btnText.style.display = 'none';
       btnSpinner.style.display = 'inline';
       loading.style.display = 'flex';
@@ -692,6 +757,7 @@
     // Hide loading state
     function hideLoading() {
       submitBtn.disabled = false;
+      attendanceSubmitBtn.disabled = false;
       btnText.style.display = 'inline';
       btnSpinner.style.display = 'none';
       loading.style.display = 'none';
@@ -703,8 +769,9 @@
       confirmation.className = `confirmation ${isSuccess ? 'success' : 'error'}`;
     }
     
-    // Show modal for update confirmation
-    function showUpdateModal(prevGoing, newGoing, prevReturn, newReturn) {
+    // Show modal asking whether to overwrite passengers who are already registered.
+    // The message contains guest-typed names, so it's set via textContent, never innerHTML.
+    function showUpdateModal(message) {
       return new Promise((resolve) => {
         const modal = document.createElement('div');
         modal.style.cssText = `
@@ -731,16 +798,14 @@
             direction: rtl;
             border: 1px solid rgba(255, 255, 255, 0.3);
           ">
-            <div style="
+            <div id="modal-message" style="
               color: #374151;
               font-size: 1.2rem;
               margin-bottom: 2rem;
               line-height: 1.6;
               font-weight: 500;
-            ">
-              אישרת כבר שתהיו <strong>${prevGoing}</strong> בהסעה הלוך ו-<strong>${prevReturn}</strong> בהסעה חזור<br><br>
-              תרצה לעדכן ל-<strong>${newGoing}</strong> בהסעה הלוך ו-<strong>${newReturn}</strong> בהסעה חזור?
-            </div>
+              white-space: pre-line;
+            "></div>
             <div style="display: flex; justify-content: center; gap: 1rem;">
               <button id="modal-update" style="
                 padding: 0.8rem 1.5rem;
@@ -769,6 +834,7 @@
             </div>
           </div>
         `;
+        modal.querySelector('#modal-message').textContent = message;
         
         document.body.appendChild(modal);
         
@@ -787,93 +853,98 @@
         });
       });
     }
+
+    function sendRegistration(phone, data, exists) {
+      const url = exists
+        ? `/api/public/${TENANT_ID}/bus-registrations/` + encodeURIComponent(phone)
+        : `/api/public/${TENANT_ID}/bus-registrations`;
+      return fetch(url, {
+        method: exists ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+    }
     
-    // Form submission handler
+    // Registration: every passenger is saved as their own registration (one row per phone),
+    // with going/return counts of 1 (yes) or 0 (no). The "on the bus" confirmations are left
+    // out on purpose so re-registering never erases them.
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
-      
-      const formData = new FormData(form);
-      const data = {
-        full_name: formData.get('fullName').trim(),
-        phone: formData.get('phone').replace(/\D/g, ''),
-        going_count: parseInt(formData.get('goingCount')),
-        return_count: parseInt(formData.get('returnCount')),
-        going_confirmed: formData.get('goingConfirmed') === 'on',
-        return_confirmed: formData.get('returnConfirmed') === 'on'
-      };
+
+      const passengers = [...passengersEl.querySelectorAll('.passenger')].map(card => ({
+        full_name: card.querySelector('.p-name').value.trim(),
+        phone: card.querySelector('.p-phone').value.replace(/\D/g, ''),
+        going_count: Number(card.querySelector('.p-going').value),
+        return_count: Number(card.querySelector('.p-return').value)
+      }));
 
       // Validation
-      if (!data.full_name) {
-        showConfirmation('אנא הזן שם מלא', false);
-        return;
-      }
-
-      if (!data.phone || !validatePhone(data.phone)) {
-        showConfirmation('אנא הזן מספר טלפון תקין', false);
-        return;
-      }
-
-      if (data.going_count < 0 || data.return_count < 0) {
-        showConfirmation('אנא בחר מספר אנשים תקין', false);
-        return;
+      const seenPhones = new Set();
+      for (const [i, p] of passengers.entries()) {
+        const label = `נוסע ${i + 1}`;
+        if (!p.full_name) {
+          showConfirmation(`${label}: אנא הזן שם מלא`, false);
+          return;
+        }
+        if (!validatePhone(p.phone)) {
+          showConfirmation(`${label}: אנא הזן מספר טלפון תקין`, false);
+          return;
+        }
+        if (seenPhones.has(p.phone)) {
+          showConfirmation(`${label}: מספר הטלפון כבר מופיע אצל נוסע אחר`, false);
+          return;
+        }
+        if (!p.going_count && !p.return_count) {
+          showConfirmation(`${label}: אנא בחר הלוך, חזור או שניהם`, false);
+          return;
+        }
+        seenPhones.add(p.phone);
       }
 
       if (PREVIEW_MODE) {
         showConfirmation('תצוגה מקדימה - לא נשמר בפועל', true);
-        form.reset();
+        resetPassengers();
         return;
       }
 
       showLoading();
 
       try {
-        // Check if phone number already exists
-        const existing = await fetchExistingRegistration(data.phone);
+        // Passengers whose phone is already registered get updated instead of created
+        const existing = await Promise.all(passengers.map(p => fetchExistingRegistration(p.phone)));
+        const existingNames = existing.filter(Boolean).map(r => r.full_name);
 
-        if (existing) {
-          const prevGoing = existing.going_count ?? '0';
-          const prevReturn = existing.return_count ?? '0';
-
-          const userWantsUpdate = await showUpdateModal(prevGoing, data.going_count, prevReturn, data.return_count);
-
+        if (existingNames.length > 0) {
+          const userWantsUpdate = await showUpdateModal(
+            `כבר רשומים להסעה:\n${existingNames.join(', ')}\n\nלעדכן את הפרטים שלהם?`
+          );
           if (!userWantsUpdate) {
             showConfirmation('ההרשמה בוטלה. הנתונים הקודמים נשמרו.', false);
-            hideLoading();
             return;
           }
+        }
 
-          // Update existing entry
-          const response = await fetch(`/api/public/${TENANT_ID}/bus-registrations/` + encodeURIComponent(data.phone), {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-          });
-
-          if (response.ok) {
-            showConfirmation('ההרשמה עודכנה בהצלחה! 🚌', true);
-            form.reset();
-          } else {
-            throw new Error('Failed to update');
-          }
-        } else {
-          // Create new entry
-          const response = await fetch(`/api/public/${TENANT_ID}/bus-registrations`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-          });
-
-          if (response.ok) {
-            showConfirmation('ההרשמה נשלחה בהצלחה! 🚌', true);
-            form.reset();
-          } else {
-            throw new Error('Failed to create');
+        const failed = [];
+        for (const [i, p] of passengers.entries()) {
+          try {
+            const response = await sendRegistration(p.phone, p, Boolean(existing[i]));
+            if (!response.ok) failed.push(p.full_name);
+          } catch {
+            failed.push(p.full_name);
           }
         }
+
+        if (failed.length > 0) {
+          showConfirmation(`לא הצלחנו לרשום את: ${failed.join(', ')}. נסה שוב בעוד רגע.`, false);
+          return;
+        }
+
+        if (passengers.length > 1) {
+          showConfirmation(`${passengers.length} נוסעים נרשמו בהצלחה! 🚌`, true);
+        } else {
+          showConfirmation(existingNames.length ? 'ההרשמה עודכנה בהצלחה! 🚌' : 'ההרשמה נשלחה בהצלחה! 🚌', true);
+        }
+        resetPassengers();
       } catch (error) {
         console.error('Error:', error);
         showConfirmation('אירעה שגיאה בשליחה. נסה שוב בעוד רגע.', false);
@@ -882,19 +953,18 @@
       }
     });
     
-    // Attendance form submission handler
+    // "I'm on the bus": only the ticked directions are sent, so ticking "return" on the way
+    // back keeps the morning's "going" confirmation and never touches anything else.
     attendanceForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const formData = new FormData(attendanceForm);
-      const data = {
-        full_name: formData.get('attendanceName').trim(),
-        phone: formData.get('attendancePhone').replace(/\D/g, ''),
-        going_count: 0,
-        return_count: 0,
-        going_confirmed: formData.get('onBusGoing') === 'on',
-        return_confirmed: formData.get('onBusReturn') === 'on'
-      };
+      const phone = formData.get('attendancePhone').replace(/\D/g, '');
+      const onGoing = formData.get('onBusGoing') === 'on';
+      const onReturn = formData.get('onBusReturn') === 'on';
+      const data = { full_name: formData.get('attendanceName').trim() };
+      if (onGoing) data.going_confirmed = true;
+      if (onReturn) data.return_confirmed = true;
 
       // Validation
       if (!data.full_name) {
@@ -902,55 +972,35 @@
         return;
       }
 
-      if (!data.phone || !validatePhone(data.phone)) {
+      if (!validatePhone(phone)) {
         showConfirmation('אנא הזן מספר טלפון תקין', false);
         return;
       }
 
-      if (!data.going_confirmed && !data.return_confirmed) {
+      if (!onGoing && !onReturn) {
         showConfirmation('אנא בחר לפחות אפשרות אחת', false);
+        return;
+      }
+
+      if (PREVIEW_MODE) {
+        showConfirmation('תצוגה מקדימה - לא נשמר בפועל', true);
+        attendanceForm.reset();
         return;
       }
 
       showLoading();
 
       try {
-        // Check if phone number already exists
-        const existing = await fetchExistingRegistration(data.phone);
+        const existing = await fetchExistingRegistration(phone);
+        // Being on the bus in a direction also means riding it: mark that direction if it
+        // wasn't registered yet (an existing count, e.g. an older group of 3, is kept).
+        if (onGoing && !(existing && existing.going_count > 0)) data.going_count = 1;
+        if (onReturn && !(existing && existing.return_count > 0)) data.return_count = 1;
+        const response = await sendRegistration(phone, { ...data, phone }, Boolean(existing));
+        if (!response.ok) throw new Error('Failed to save attendance');
 
-        if (existing) {
-          // Update existing entry
-          const response = await fetch(`/api/public/${TENANT_ID}/bus-registrations/` + encodeURIComponent(data.phone), {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-          });
-
-          if (response.ok) {
-            showConfirmation('אישור הנוכחות עודכן בהצלחה! 🚌', true);
-            attendanceForm.reset();
-          } else {
-            throw new Error('Failed to update');
-          }
-        } else {
-          // Create new entry
-          const response = await fetch(`/api/public/${TENANT_ID}/bus-registrations`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-          });
-
-          if (response.ok) {
-            showConfirmation('אישור הנוכחות נשלח בהצלחה! 🚌', true);
-            attendanceForm.reset();
-          } else {
-            throw new Error('Failed to create');
-          }
-        }
+        showConfirmation(existing ? 'אישור הנוכחות עודכן בהצלחה! 🚌' : 'אישור הנוכחות נשלח בהצלחה! 🚌', true);
+        attendanceForm.reset();
       } catch (error) {
         console.error('Error:', error);
         showConfirmation('אירעה שגיאה בשליחה. נסה שוב בעוד רגע.', false);
@@ -961,6 +1011,7 @@
     
     // Initialize page on load
     loadConfig();
+    addPassenger();
     autoFillFromUrl();
   </script>
 </body>
