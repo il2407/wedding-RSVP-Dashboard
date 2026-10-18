@@ -14,6 +14,11 @@ function getTwilioClient() {
   return twilioClient;
 }
 
+// Lets the send endpoint refuse up front instead of queueing a job nothing will ever pick up.
+function isTwilioConfigured() {
+  return !!getTwilioClient() && !!process.env.TWILIO_WHATSAPP_FROM;
+}
+
 // Guest phone numbers are stored as typed (e.g. 0501234567); Twilio needs full E.164
 // (e.g. 972501234567), same conversion the manual wa.me tool does client-side.
 function toE164Digits(phone, countryCode) {
@@ -32,7 +37,7 @@ async function processJob(job) {
 
   if (!client || !fromNumber) {
     console.error(
-      `WhatsApp job ${job.id} is due but Twilio isn't configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_WHATSAPP_FROM in the server .env — it will be picked up automatically on the next check.`
+      `WhatsApp job ${job.id} is due but Twilio isn't configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_WHATSAPP_FROM in the server .env — it will be picked up on the next server restart.`
     );
     return;
   }
@@ -41,7 +46,7 @@ async function processJob(job) {
   const settings = settingsRows[0];
   const countryCode = settings ? settings.whatsapp_country_code : '';
 
-  // Claim the job atomically: runDueJobs selected it earlier, and it may have been cancelled
+  // Claim the job atomically: runPendingJobs selected it earlier, and it may have been cancelled
   // since (e.g. while an earlier job in the same run was still sending), so only proceed if
   // it's still pending/sending at this moment.
   const { rows: claimed } = await query(
@@ -85,38 +90,50 @@ async function processJob(job) {
 }
 
 let isRunning = false;
+let rerunRequested = false;
 
-// Picks up jobs whose scheduled time has arrived, plus any still stuck in 'sending' from a
-// server restart mid-job (processJob only re-sends recipients still marked 'pending', so
-// this is safe to re-run without double-sending anyone who already succeeded or failed).
-async function runDueJobs() {
-  if (isRunning) return;
+// Sends every immediate job that hasn't finished yet, plus any still stuck in 'sending' from a
+// server restart mid-job (processJob only re-sends recipients still marked 'pending', so this
+// is safe to re-run without double-sending anyone who already succeeded or failed).
+//
+// Jobs left 'pending' from the removed scheduled-send feature (scheduled_at later than
+// created_at) are deliberately skipped: they stay in the history and can still be cancelled.
+async function runPendingJobs() {
+  // A job created while a run is in progress isn't in that run's list, so remember to look
+  // again once it finishes (there's no periodic check to pick it up later).
+  if (isRunning) {
+    rerunRequested = true;
+    return;
+  }
   isRunning = true;
   try {
-    const { rows: dueJobs } = await query(
-      "SELECT * FROM whatsapp_jobs WHERE status IN ('pending', 'sending') AND scheduled_at <= $1",
-      [new Date().toISOString()]
-    );
+    do {
+      rerunRequested = false;
+      const { rows: jobs } = await query(
+        "SELECT * FROM whatsapp_jobs WHERE status = 'sending' OR (status = 'pending' AND scheduled_at <= created_at) ORDER BY id"
+      );
 
-    for (const job of dueJobs) {
-      await processJob(job);
-    }
+      for (const job of jobs) {
+        await processJob(job);
+      }
+    } while (rerunRequested);
   } finally {
     isRunning = false;
   }
 }
 
-// Runs in the background (timer / fire-and-forget), so errors must be caught here — an
-// unhandled rejection would otherwise crash the whole server.
-function runDueJobsSafely() {
-  return runDueJobs().catch((err) => {
-    console.error('WhatsApp scheduler run failed', err);
+// Runs fire-and-forget, so errors must be caught here — an unhandled rejection would
+// otherwise crash the whole server.
+function runPendingJobsSafely() {
+  return runPendingJobs().catch((err) => {
+    console.error('WhatsApp sender run failed', err);
   });
 }
 
-function startScheduler() {
-  runDueJobsSafely();
-  setInterval(runDueJobsSafely, 30 * 1000);
+// One-off check at startup to finish sends interrupted by a restart. Nothing runs
+// periodically after this, so an idle server never queries the database on its own.
+function resumeInterruptedJobs() {
+  return runPendingJobsSafely();
 }
 
-module.exports = { startScheduler, runDueJobs, runDueJobsSafely, processJob };
+module.exports = { resumeInterruptedJobs, runPendingJobs, runPendingJobsSafely, processJob, isTwilioConfigured };

@@ -2,7 +2,7 @@ const express = require('express');
 const { query, withTransaction } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { requireNumericParam } = require('../middleware/errors');
-const { runDueJobsSafely } = require('../services/whatsappSender');
+const { runPendingJobsSafely, isTwilioConfigured } = require('../services/whatsappSender');
 
 const router = express.Router();
 router.param('id', requireNumericParam);
@@ -81,7 +81,7 @@ router.post('/admin/whatsapp/recipients-preview', requireAuth, async (req, res) 
 });
 
 router.post('/admin/whatsapp/jobs', requireAuth, async (req, res) => {
-  const { message_template, phones, scheduled_at, unresponded_only } = req.body;
+  const { message_template, phones, unresponded_only } = req.body;
 
   if (!message_template || !message_template.trim()) {
     return res.status(400).json({ error: 'message_template is required' });
@@ -90,11 +90,13 @@ router.post('/admin/whatsapp/jobs', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'phones must be a non-empty array' });
   }
 
-  const now = new Date();
-  const sendAt = scheduled_at ? new Date(scheduled_at) : now;
-  if (Number.isNaN(sendAt.getTime())) {
-    return res.status(400).json({ error: 'scheduled_at is not a valid date' });
+  // Sending is immediate and nothing retries later, so a job created without Twilio set up
+  // would just sit in 'pending' forever.
+  if (!isTwilioConfigured()) {
+    return res.status(503).json({ error: 'Automated WhatsApp sending is not configured on the server (Twilio credentials missing)' });
   }
+
+  const now = new Date();
 
   // Without a country code, toE164Digits() would strip leading zeros and prepend nothing,
   // sending every message in this job to a malformed number.
@@ -111,7 +113,7 @@ router.post('/admin/whatsapp/jobs', requireAuth, async (req, res) => {
   const jobId = await withTransaction(async (client) => {
     const { rows } = await client.query(
       'INSERT INTO whatsapp_jobs (user_id, message_template, scheduled_at, status, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [req.userId, message_template, sendAt.toISOString(), 'pending', now.toISOString()]
+      [req.userId, message_template, now.toISOString(), 'pending', now.toISOString()]
     );
     const id = rows[0].id;
     for (const r of recipients) {
@@ -127,9 +129,7 @@ router.post('/admin/whatsapp/jobs', requireAuth, async (req, res) => {
     return id;
   });
 
-  if (sendAt.getTime() <= now.getTime()) {
-    runDueJobsSafely(); // fire-and-forget: picks this job up right away instead of waiting for the next poll
-  }
+  runPendingJobsSafely(); // fire-and-forget: sends this job right away
 
   const { rows: jobRows } = await query('SELECT * FROM whatsapp_jobs WHERE id = $1', [jobId]);
   res.status(201).json({ ...jobRows[0], total: recipients.length });

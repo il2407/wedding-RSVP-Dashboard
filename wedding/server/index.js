@@ -12,7 +12,7 @@ const rsvpRoutes = require('./routes/rsvps');
 const busRegistrationRoutes = require('./routes/busRegistrations');
 const mediaRoutes = require('./routes/media');
 const whatsappRoutes = require('./routes/whatsapp');
-const { startScheduler } = require('./services/whatsappSender');
+const { resumeInterruptedJobs } = require('./services/whatsappSender');
 
 const app = express();
 app.use(express.json());
@@ -51,4 +51,4 @@ app.listen(port, () => {
   console.log(`Wedding platform server listening on http://localhost:${port}`);
 });
 
-startScheduler();
+resumeInterruptedJobs();
