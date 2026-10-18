@@ -325,6 +325,15 @@
     </div>
 
     <div class="card">
+      <h2>קישור להסעה</h2>
+      <p style="font-size:0.85rem; color:#6b7280; margin-top:-0.6rem;">
+        קישור אחד לכל המוזמנים - להרשמה להסעה ולאישור "אני באוטובוס"
+      </p>
+      <input type="text" id="bus-link" readonly dir="ltr" style="margin-bottom:0.75rem;">
+      <button type="button" id="copy-bus-link-btn" class="secondary">העתקת קישור להסעה</button>
+    </div>
+
+    <div class="card">
       <h2>פרטי האירוע</h2>
       <form id="config-form">
         <div class="two-col">
@@ -839,10 +848,23 @@
       }
     });
 
+    document.getElementById('copy-bus-link-btn').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const link = document.getElementById('bus-link').value;
+      try {
+        await navigator.clipboard.writeText(link);
+        btn.textContent = 'הועתק!';
+      } catch (err) {
+        alert(`לא ניתן להעתיק אוטומטית. הקישור:\n${link}`);
+      }
+      setTimeout(() => { btn.textContent = 'העתקת קישור להסעה'; }, 1500);
+    });
+
     (async function init() {
       await loadCurrentUser();
       document.getElementById('preview-rsvp-link').href = `/rsvp-form/?u=${currentUserId}&preview=1`;
       document.getElementById('preview-bus-link').href = `/bus-approval/?u=${currentUserId}&preview=1`;
+      document.getElementById('bus-link').value = `${window.location.origin}/bus-approval/?u=${currentUserId}`;
       populateTemplatePresets();
       loadConfigForm();
       loadMediaSlots();
