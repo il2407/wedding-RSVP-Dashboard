@@ -147,7 +147,7 @@ body .file-format-hint { line-height: 1.8; }
 .bulk-messaging-page #phone-numbers { min-height: 150px; direction: ltr; text-align: left; }
 .bulk-messaging-page .secondary-btn { margin-top: 12px; }
 .bulk-messaging-page .send-btn { width: auto; min-width: 180px; margin-bottom: 16px; }
-.bulk-messaging-page :is(#schedule-send-btn,#next-chat-btn) { background: var(--forest) !important; }
+.bulk-messaging-page #next-chat-btn { background: var(--forest) !important; }
 .bulk-messaging-page :is(.form-group h2,#jobs-container h3) { color: var(--ink) !important; font-weight: 500; }
 .bulk-messaging-page .preview { background: #eef3e8; border: 1px solid var(--line); padding: 24px; margin-bottom: 16px; }
 .bulk-messaging-page .progress-bar { background: var(--forest); }

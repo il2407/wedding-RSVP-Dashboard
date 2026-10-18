@@ -11,8 +11,6 @@ const invitedGuestsRoutes = require('./routes/invitedGuests');
 const rsvpRoutes = require('./routes/rsvps');
 const busRegistrationRoutes = require('./routes/busRegistrations');
 const mediaRoutes = require('./routes/media');
-const whatsappRoutes = require('./routes/whatsapp');
-const { resumeInterruptedJobs } = require('./services/whatsappSender');
 
 const app = express();
 app.use(express.json());
@@ -23,7 +21,6 @@ app.use('/api', configRoutes);
 app.use('/api', invitedGuestsRoutes);
 app.use('/api', rsvpRoutes);
 app.use('/api', busRegistrationRoutes);
-app.use('/api', whatsappRoutes);
 app.use(mediaRoutes);
 
 const weddingRoot = path.join(__dirname, '..');
@@ -50,5 +47,3 @@ const port = process.env.PORT || 8080;
 app.listen(port, () => {
   console.log(`Wedding platform server listening on http://localhost:${port}`);
 });
-
-resumeInterruptedJobs();

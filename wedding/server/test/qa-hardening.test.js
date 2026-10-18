@@ -29,7 +29,6 @@ const busRoutes = require('../routes/busRegistrations');
 const configRoutes = require('../routes/config');
 const invitedGuestsRoutes = require('../routes/invitedGuests');
 const { normalizePhone } = require('../routes/invitedGuests');
-const whatsappRoutes = require('../routes/whatsapp');
 const mediaRoutes = require('../routes/media');
 const authRoutes = require('../routes/auth');
 
@@ -73,7 +72,6 @@ test.before(async () => {
   app.use('/api', invitedGuestsRoutes);
   app.use('/api', rsvpRoutes);
   app.use('/api', busRoutes);
-  app.use('/api', whatsappRoutes);
   app.use(mediaRoutes);
   app.use(errorHandler);
   server = http.createServer(app);
@@ -92,8 +90,6 @@ test('non-numeric account ids on public routes are a 404, not a crash', async ()
     const res = await fetch(`${baseUrl}${urlPath}`);
     assert.equal(res.status, 404, urlPath);
   }
-  const res = await fetch(`${baseUrl}/api/admin/whatsapp/jobs/abc`, { headers: authHeaders(await makeUser()) });
-  assert.equal(res.status, 404);
 });
 
 test('malformed JSON and non-string passwords get a JSON 400', async () => {
@@ -212,19 +208,4 @@ test('invited guests: editing a legacy dashed-phone guest without changing the p
     { name: 'Legacy Renamed', phone: '050-111-2222' }, authHeaders(userId));
   assert.equal(res.status, 200);
   assert.equal((await res.json()).phone, '050-111-2222');
-});
-
-test('only a still-pending WhatsApp job can be cancelled', async () => {
-  const userId = await makeUser();
-  const now = new Date().toISOString();
-  const { rows } = await query(
-    "INSERT INTO whatsapp_jobs (user_id, message_template, scheduled_at, status, created_at) VALUES ($1, 'hi', $2, 'sending', $2) RETURNING id",
-    [userId, now]
-  );
-  const sending = await fetch(`${baseUrl}/api/admin/whatsapp/jobs/${rows[0].id}`, { method: 'DELETE', headers: authHeaders(userId) });
-  assert.equal(sending.status, 409);
-
-  await query("UPDATE whatsapp_jobs SET status = 'pending' WHERE id = $1", [rows[0].id]);
-  const pending = await fetch(`${baseUrl}/api/admin/whatsapp/jobs/${rows[0].id}`, { method: 'DELETE', headers: authHeaders(userId) });
-  assert.equal(pending.status, 204);
 });

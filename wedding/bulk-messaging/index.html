@@ -253,23 +253,6 @@
         <button id="next-chat-btn" class="send-btn" style="display: none; background: linear-gradient(135deg, #059669, #047857);" onclick="openNextChat()">
             פתיחת השיחה הבאה
         </button>
-
-        <hr style="margin: 2rem 0; border: none; border-top: 1px solid #e2e8f0;">
-
-        <div class="form-group">
-            <h2 style="color: #ea580c; font-size: 1.3rem; margin-bottom: 0.5rem;">שליחה אוטומטית</h2>
-            <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1rem;">
-                שליחה דרך Twilio לפי תוכן ההודעה ורשימת המספרים למעלה. הוסיפו <code>{name}</code> להודעה כדי לפנות לכל אורח בשמו. ההודעות נשלחות מיד.
-            </p>
-            <button class="send-btn" id="schedule-send-btn" style="background: linear-gradient(135deg, #059669, #047857);" onclick="sendAutomated()">
-                שליחה דרך Twilio
-            </button>
-        </div>
-
-        <div id="jobs-container">
-            <h3 style="color: #ea580c; margin-bottom: 0.5rem; font-size: 1rem;">היסטוריית שליחה אוטומטית</h3>
-            <div id="jobs-list" style="font-size: 0.9rem;"></div>
-        </div>
     </div>
 
     <script src="/assets/hebrew-name-format.js"></script>
@@ -345,8 +328,7 @@
                 }
                 let guests = await res.json();
 
-                // Mirrors the server-side filtering in buildRecipients() so the count shown
-                // here always matches who will actually receive the send.
+                // Guests marked do-not-send are never messaged.
                 guests = guests.filter(g => !g.do_not_send);
 
                 if (document.getElementById('unresponded-only-checkbox').checked) {
@@ -393,7 +375,7 @@
         }
 
         // Fills in {name} for lines typed without one, from the invited guest list by phone.
-        // A phone that isn't on the list gets an empty name, same as the server-side Twilio send.
+        // A phone that isn't on the list gets an empty name.
         async function loadGuestNames() {
             try {
                 const res = await fetch('/api/invited-guests');
@@ -671,113 +653,6 @@
             statusDiv.className = `status ${type}`;
             statusDiv.textContent = message;
         }
-
-        async function sendAutomated() {
-            const template = document.getElementById('message-template').value;
-            const phoneNumbers = parseRecipientLines().map(r => r.phone);
-
-            if (!template || phoneNumbers.length === 0) {
-                showStatus('Please fill in both message template and phone numbers.', 'error');
-                return;
-            }
-
-            const scheduleBtn = document.getElementById('schedule-send-btn');
-            scheduleBtn.disabled = true;
-
-            const unrespondedOnly = document.getElementById('unresponded-only-checkbox').checked;
-
-            try {
-                const res = await fetch('/api/admin/whatsapp/jobs', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message_template: template,
-                        phones: phoneNumbers,
-                        unresponded_only: unrespondedOnly,
-                    }),
-                });
-                const data = await res.json();
-                if (!res.ok) {
-                    showStatus(data.error || 'Could not start the send.', 'error');
-                    return;
-                }
-                // The server re-filters phones (excluding do-not-send and, if requested,
-                // already-responded guests), so report the actual recipient count it used.
-                const actualCount = data.total ?? phoneNumbers.length;
-                showStatus(`Sending ${actualCount} message(s) now via Twilio...`, 'success');
-                loadJobs();
-            } catch (error) {
-                console.error('Error starting send:', error);
-                showStatus('Could not reach the server to start the send.', 'error');
-            } finally {
-                scheduleBtn.disabled = false;
-            }
-        }
-
-        function jobStatusLabel(job) {
-            if (job.status === 'cancelled') return 'Cancelled';
-            if (job.status === 'failed') return `Failed — ${job.failed || 0} failed, nothing sent`;
-            if (job.status === 'completed') return `Completed — ${job.sent || 0} sent, ${job.failed || 0} failed`;
-            if (job.status === 'sending') return `Sending… ${(job.sent || 0) + (job.failed || 0)}/${job.total} done`;
-            return 'Pending';
-        }
-
-        // Matches the server's runPendingJobs: a job is still going out while it's 'sending',
-        // or 'pending' and not a leftover from the removed scheduled-send feature.
-        function isActiveJob(job) {
-            return job.status === 'sending' || (job.status === 'pending' && job.scheduled_at <= job.created_at);
-        }
-
-        // Status only changes while a send is in progress, so poll just then, and never from a
-        // hidden tab (every poll is a database query).
-        const JOBS_POLL_MS = 10000;
-        let jobsPollTimer = null;
-        let hasActiveJobs = false;
-
-        function scheduleJobsPoll() {
-            clearTimeout(jobsPollTimer);
-            jobsPollTimer = hasActiveJobs && !document.hidden ? setTimeout(loadJobs, JOBS_POLL_MS) : null;
-        }
-
-        document.addEventListener('visibilitychange', () => {
-            // Coming back refreshes once (statuses may have changed meanwhile), which resumes
-            // polling if a send is still running.
-            if (document.hidden) scheduleJobsPoll();
-            else loadJobs();
-        });
-
-        async function loadJobs() {
-            try {
-                const res = await fetch('/api/admin/whatsapp/jobs');
-                if (!res.ok) return;
-                const jobs = await res.json();
-                hasActiveJobs = jobs.some(isActiveJob);
-                const list = document.getElementById('jobs-list');
-                if (jobs.length === 0) {
-                    list.innerHTML = '<p style="color:#6b7280;">No automated sends yet.</p>';
-                    return;
-                }
-                list.innerHTML = jobs.map(job => `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.8rem; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:0.5rem;">
-                        <div><strong>${job.total} recipient(s)</strong> — ${jobStatusLabel(job)}</div>
-                        ${job.status === 'pending' ? `<button class="secondary-btn" onclick="cancelJob(${job.id})">Cancel</button>` : ''}
-                    </div>
-                `).join('');
-            } catch (error) {
-                console.error('Error loading jobs:', error);
-            } finally {
-                // On a failed request this keeps the last known state, so a transient error
-                // mid-send doesn't stop the updates.
-                scheduleJobsPoll();
-            }
-        }
-
-        async function cancelJob(id) {
-            await fetch(`/api/admin/whatsapp/jobs/${id}`, { method: 'DELETE' });
-            loadJobs();
-        }
-
-        loadJobs();
     </script>
 </body>
 </html> 

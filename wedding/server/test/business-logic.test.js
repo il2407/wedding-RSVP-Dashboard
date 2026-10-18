@@ -13,7 +13,6 @@ process.env.DATA_DIR = tmpDataDir;
 
 const { query, pool } = require('../db');
 const { statusForGuestCount, getStats } = require('../routes/rsvps');
-const { buildRecipients } = require('../routes/whatsapp');
 const { csvField } = require('../routes/invitedGuests');
 const { formatHebrewNameList } = require('../../assets/hebrew-name-format');
 
@@ -78,54 +77,6 @@ test('getStats: a decline counts as responded but contributes 0 confirmed attend
   assert.equal(stats.unanswered, 0);
   assert.equal(stats.confirmedAttendees, 0);
   assert.equal(stats.declined, 1);
-});
-
-function fakeReq(userId, phones, unrespondedOnly) {
-  return {
-    userId,
-    protocol: 'http',
-    get: () => 'localhost:8080',
-  };
-}
-
-test('buildRecipients: excludes do_not_send guests regardless of client selection (issue #1)', async () => {
-  const userId = await makeUser();
-  await addGuest(userId, '0504444444', 'Send Me');
-  await addGuest(userId, '0505555555', 'Do Not Send', { do_not_send: true });
-
-  const recipients = await buildRecipients(fakeReq(userId), ['0504444444', '0505555555'], false);
-  assert.deepEqual(
-    recipients.map((r) => r.phone),
-    ['0504444444']
-  );
-});
-
-test('buildRecipients: unrespondedOnly excludes guests who already have an RSVP on file (issue #1)', async () => {
-  const userId = await makeUser();
-  await addGuest(userId, '0506666666', 'Answered');
-  await addGuest(userId, '0507777777', 'Not Answered');
-  await addRsvp(userId, '0506666666', 1);
-
-  const all = await buildRecipients(fakeReq(userId), ['0506666666', '0507777777'], false);
-  assert.equal(all.length, 2);
-
-  const unrespondedOnly = await buildRecipients(fakeReq(userId), ['0506666666', '0507777777'], true);
-  assert.deepEqual(
-    unrespondedOnly.map((r) => r.phone),
-    ['0507777777']
-  );
-});
-
-test('buildRecipients: only considers phones the client actually requested', async () => {
-  const userId = await makeUser();
-  await addGuest(userId, '0508888888', 'Requested');
-  await addGuest(userId, '0509999999', 'Not Requested');
-
-  const recipients = await buildRecipients(fakeReq(userId), ['0508888888'], false);
-  assert.deepEqual(
-    recipients.map((r) => r.phone),
-    ['0508888888']
-  );
 });
 
 test('csvField: leaves plain values untouched (issue #7)', () => {

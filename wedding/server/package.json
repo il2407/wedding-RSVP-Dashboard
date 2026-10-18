@@ -16,8 +16,7 @@
     "express": "^4.19.2",
     "google-auth-library": "^9.14.1",
     "multer": "^2.2.0",
-    "pg": "^8.13.0",
-    "twilio": "^5.13.1"
+    "pg": "^8.13.0"
   },
   "devDependencies": {
     "pg-mem": "^3.0.4"
