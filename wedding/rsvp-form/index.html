@@ -190,13 +190,15 @@
     }
     function prefetchResponseMedia() {
       if (!responseMediaEnabled || PREVIEW_MODE) return;
-      [APPROVAL_GIF, DECLINE_GIF, MAYBE_GIF].forEach(url => fetchMediaBlob(url).catch(() => {}));
+      // One at a time, approval first: it's the most common response and shouldn't share bandwidth.
+      [APPROVAL_GIF, DECLINE_GIF, MAYBE_GIF].reduce(
+        (prev, url) => prev.then(() => fetchMediaBlob(url)).catch(() => {}), Promise.resolve());
     }
     async function showGifPopup(gifUrl) {
       if (!responseMediaEnabled) return false;
       const request = ++mediaRequest;
       try {
-        const blob = await fetchMediaBlob(gifUrl);
+        const blob = await fetchMediaBlob(gifUrl).catch(() => fetchMediaBlob(gifUrl));
         if (!blob || request !== mediaRequest) return false;
         const video = document.getElementById('photo-video');
         const isVideo = blob.type.startsWith('video/');
@@ -351,6 +353,7 @@
 
       const phoneParam = getUrlParameter('phone');
       if (phoneParam) {
+        getExistingRsvp(phoneParam).catch(() => {});
         const guest = await checkInvitedGuest(phoneParam);
         if (guest && guest.name) {
           personalizedGreeting.textContent = `${guest.name}! 👋`;
@@ -398,6 +401,13 @@
       if (!res.ok) throw new Error();
       return await res.json();
     }
+    // Looked up on page load so submitting doesn't wait on it; updated after each save so a
+    // second submit in the same visit still asks before overwriting. Failures are refetched.
+    let existingRsvpLookup;
+    function getExistingRsvp(phone) {
+      if (!existingRsvpLookup) existingRsvpLookup = fetchExistingRsvp(phone).catch(err => { existingRsvpLookup = null; throw err; });
+      return existingRsvpLookup;
+    }
 
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -434,9 +444,10 @@
       actionButtons.style.display = 'none';
       globalLoader.style.display = 'flex';
 
+      let popupShown = false;
       try {
         // Check for existing phone number
-        const existingRsvp = await fetchExistingRsvp(phone);
+        const existingRsvp = await getExistingRsvp(phone);
         if (existingRsvp) {
           const prevGuests = existingRsvp.guests ?? '?';
           const userWantsUpdate = await showModal(prevGuests, guests);
@@ -450,6 +461,8 @@
             return;
           }
           // User wants to update: PUT the existing row
+          popupShown = true;
+          showGifPopup(parseInt(guests) >= 1 ? APPROVAL_GIF : DECLINE_GIF);
           const response = await fetch(`/api/public/${TENANT_ID}/rsvps/` + encodeURIComponent(phone), {
             method: 'PUT',
             headers: {
@@ -460,19 +473,15 @@
           if (response.ok) {
             confirmation.style.color = '#10b981';
             confirmation.textContent = 'הנתון עודכן בהצלחה 🎊';
+            existingRsvpLookup = Promise.resolve({ guests });
             form.reset();
-            // Show video based on guest count
-            const guestCount = parseInt(guests);
-            if (guestCount >= 1) {
-              showGifPopup(APPROVAL_GIF);
-            } else {
-              showGifPopup(DECLINE_GIF);
-            }
           } else {
             throw new Error();
           }
         } else {
           // No existing phone: POST a new row
+          popupShown = true;
+          showGifPopup(parseInt(guests) >= 1 ? APPROVAL_GIF : DECLINE_GIF);
           const response = await fetch(`/api/public/${TENANT_ID}/rsvps`, {
             method: 'POST',
             headers: {
@@ -483,19 +492,14 @@
           if (response.ok) {
             confirmation.style.color = '#10b981';
             confirmation.textContent = 'תודה! ההגעה שלך נרשמה 🎊';
+            existingRsvpLookup = Promise.resolve({ guests });
             form.reset();
-            // Show video based on guest count
-            const guestCount = parseInt(guests);
-            if (guestCount >= 1) {
-              showGifPopup(APPROVAL_GIF);
-            } else {
-              showGifPopup(DECLINE_GIF);
-            }
           } else {
             throw new Error();
           }
         }
       } catch {
+        if (popupShown) hidePhotoPopup();
         confirmation.style.color = '#ef4444';
         confirmation.textContent = 'אירעה שגיאה בשליחה. נסה שוב בעוד רגע.';
       } finally {
@@ -541,9 +545,10 @@
       actionButtons.style.display = 'none';
       globalLoader.style.display = 'flex';
 
+      let popupShown = false;
       try {
         // Check for existing phone number
-        const existingRsvp = await fetchExistingRsvp(phone);
+        const existingRsvp = await getExistingRsvp(phone);
         if (existingRsvp) {
           const prevGuests = existingRsvp.guests ?? '?';
           const userWantsUpdate = await showModal(prevGuests, '0');
@@ -557,6 +562,8 @@
             return;
           }
           // User wants to update: PUT the existing row
+          popupShown = true;
+          showGifPopup(DECLINE_GIF);
           const response = await fetch(`/api/public/${TENANT_ID}/rsvps/` + encodeURIComponent(phone), {
             method: 'PUT',
             headers: {
@@ -567,14 +574,15 @@
           if (response.ok) {
             confirmation.style.color = '#10b981';
             confirmation.textContent = 'הנתון עודכן בהצלחה 🎊';
+            existingRsvpLookup = Promise.resolve({ guests: '0' });
             form.reset();
-            // Show video for 0 guests
-            showGifPopup(DECLINE_GIF);
           } else {
             throw new Error();
           }
         } else {
           // No existing phone: POST a new row
+          popupShown = true;
+          showGifPopup(DECLINE_GIF);
           const response = await fetch(`/api/public/${TENANT_ID}/rsvps`, {
             method: 'POST',
             headers: {
@@ -585,14 +593,14 @@
           if (response.ok) {
             confirmation.style.color = '#10b981';
             confirmation.textContent = 'תודה! ההגעה שלך נרשמה 🎊';
+            existingRsvpLookup = Promise.resolve({ guests: '0' });
             form.reset();
-            // Show video for 0 guests
-            showGifPopup(DECLINE_GIF);
           } else {
             throw new Error();
           }
         }
       } catch {
+        if (popupShown) hidePhotoPopup();
         confirmation.style.color = '#ef4444';
         confirmation.textContent = 'אירעה שגיאה בשליחה. נסה שוב בעוד רגע.';
       } finally {
