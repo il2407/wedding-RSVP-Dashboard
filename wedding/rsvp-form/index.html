@@ -174,14 +174,30 @@
     let responseMediaEnabled = true;
     let popupTrigger;
     let mediaRequest = 0;
+    // Response media is downloaded in the background on page load so the popup opens right
+    // after the RSVP saves, instead of waiting for a multi-MB download to start then.
+    // Resolves to the blob, or null when the slot isn't uploaded; network failures are not
+    // cached so the next attempt retries. Preview mode always refetches to show fresh uploads.
+    const mediaBlobs = {};
+    function fetchMediaBlob(url) {
+      if (PREVIEW_MODE) delete mediaBlobs[url];
+      if (!mediaBlobs[url]) {
+        mediaBlobs[url] = fetch(url)
+          .then(res => res.ok ? res.blob() : null)
+          .catch(err => { delete mediaBlobs[url]; throw err; });
+      }
+      return mediaBlobs[url];
+    }
+    function prefetchResponseMedia() {
+      if (!responseMediaEnabled || PREVIEW_MODE) return;
+      [APPROVAL_GIF, DECLINE_GIF, MAYBE_GIF].forEach(url => fetchMediaBlob(url).catch(() => {}));
+    }
     async function showGifPopup(gifUrl) {
       if (!responseMediaEnabled) return false;
       const request = ++mediaRequest;
       try {
-        const res = await fetch(gifUrl);
-        if (!res.ok || request !== mediaRequest) return false;
-        const blob = await res.blob();
-        if (request !== mediaRequest) return false;
+        const blob = await fetchMediaBlob(gifUrl);
+        if (!blob || request !== mediaRequest) return false;
         const video = document.getElementById('photo-video');
         const isVideo = blob.type.startsWith('video/');
         photoImage.style.display = isVideo ? 'none' : 'block';
@@ -310,6 +326,7 @@
           img.onerror = () => { img.hidden = true; };
           img.src = url;
         });
+        prefetchResponseMedia();
         if (PREVIEW_MODE) window.parent.postMessage({ type: 'rsvp-preview-ready' }, location.origin);
       } catch { confirmation.textContent = 'לא הצלחנו לטעון את פרטי האירוע. נסו לרענן את העמוד.'; }
     }
